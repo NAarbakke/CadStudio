@@ -1,0 +1,10 @@
+# CAD kernel, model decorators, exports, snapshots and the CAD Viewer (pinned to the text-to-cad plugin version)
+cadgen[snapshot]==0.6.6
+# integrations/solidworks_import.py (Windows COM)
+pywin32; sys_platform == "win32"
+# integrations/onshape_import.py
+requests
+# optional: standalone GLB rendering, PDF/figure tooling used for resources/
+pyvista
+pymupdf
+pillow
