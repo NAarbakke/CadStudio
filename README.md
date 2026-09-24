@@ -111,7 +111,8 @@ Checks run with `read_step` on the saved STEP files (rerun with the snippet belo
 - Every part of every model is a valid solid.
 - Turbojet: envelope 965 × Ø292 mm (matches the source); rotor clears all static parts (min 1.16 mm).
 - Turbofan (E3): envelope x −1590…4580 mm, Ø2489 mm (matches Table I); fan tip clearance ≥ 7.1 mm;
-  LP spool clears casing 2.99 mm, frame hub/plug 5 mm, stators ≥ 12 mm. HP spool clearance check not yet completed.
+  LP spool clears casing 2.99 mm, frame hub/plug 5 mm, stators ≥ 12 mm; HP spool clears casing 2.19 mm, HPC stators 2.38 mm, frame hub 4.34 mm;
+  LP–HP spool gap 20 mm.
 - Ramjet: parts meet with zero overlap.
 
 ```python
