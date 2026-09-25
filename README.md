@@ -103,6 +103,49 @@ Notes:
   because SolidWorks resolves relative paths against its own working directory.
 - Re-importing creates new documents; none of the platforms keeps downstream features on a dumb
   import across changes, so do detailing (drawings, fillets on imported bodies) only on a frozen model.
+- `solidworks_import.py` was moved onto `sw_api.py` (typed COM wrappers) after the tests above; the
+  rewritten version has not been re-run yet (SolidWorks closed during the first attempt).
+
+## Native parametric SolidWorks (no STEP)
+
+`integrations/sw_api.py` drives SolidWorks' own modeller over COM, so the result has a real feature
+tree: fully defined sketches, named dimensions, circular patterns driven by global variables.
+No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
+
+```powershell
+# build the ramjet as native parts + assembly -> models/SolidWorks/ramjet_native/
+.venv\Scripts\python integrations\sw_build_ramjet.py
+
+# inspect and edit any .SLDPRT/.SLDASM (rebuilds, refuses to save on rebuild errors)
+.venv\Scripts\python integrations\sw_edit.py list models\SolidWorks\ramjet_native\inlet.SLDPRT
+.venv\Scripts\python integrations\sw_edit.py set  models\SolidWorks\ramjet_native\inlet.SLDPRT SpikeStruts_count=6 r1@CowlProfile=210
+.venv\Scripts\python integrations\sw_edit.py suppress models\SolidWorks\ramjet_native\inlet.SLDPRT SpikeStruts
+```
+
+- The builder reads the profile data from `models/src/ramjet.py`, so both paths share one source of
+  truth. Verified: all six parts match the cadgen volumes to 0.01 L, all sketches fully defined.
+- Naming: sketch points are dimensioned `x<i>`/`r<i>@<Feature>Profile`; blade rows are
+  `<Row>Blade` + pattern `<Row>` with global `<Row>_count`.
+- Only the ramjet has a native builder so far (revolves, extrusions, patterns). The turbojet and
+  turbofan need spline profiles and lofted blades first.
+- Files saved by a 3DEXPERIENCE Makers licence are flagged personal-use.
+- pywin32 type wrappers: `sw_api` generates them on first use (`gencache.EnsureModule`); after a
+  SolidWorks upgrade delete `%LOCALAPPDATA%\Temp\gen_py` to regenerate.
+
+## Recommended workflow
+
+1. **Develop in build123d** (`models/src/*.py`): layout, proportions, clearances, stage counts.
+   Fast iteration, diffable in git, checked with the viewer and `read_step`. Get it ~90 % there.
+2. **Freeze and hand over to SolidWorks natively** (`sw_build_*.py`) rather than as STEP, so the
+   SolidWorks model has editable dimensions instead of dumb solids.
+3. **Final tuning in SolidWorks**, by hand or with `sw_edit.py`: dimension tweaks, fillets,
+   drawings, mates, materials, simulation.
+4. **Decide once which side is master.** After detailing starts in SolidWorks, regenerating from
+   Python overwrites that work. Carry big changes back into the Python data (and rebuild), keep
+   small, detail-level changes in SolidWorks only.
+
+STEP import (`solidworks_import.py`) remains the quick path for looking at a model or sharing it
+with someone else.
 
 ## Verification done
 
