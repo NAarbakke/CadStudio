@@ -9,7 +9,6 @@ and pushed into SolidWorks, Fusion or Onshape.
 | Turbofan | `models/src/turbofan.py` | GE/NASA Energy Efficient Engine (E3): two-spool, long-duct mixed-flow turbofan, 12 parts | Dimensions and flowpath from the E3 NASA report ([resources/README.md](resources/README.md)) |
 | Turbojet | `models/src/turbojet.py` | NASA Lewis small expendable turbojet: single spool, 4-stage compressor, annular combustor, 1-stage turbine, 11 parts | Dimensions and flowpath from the NASA report ([resources/README.md](resources/README.md)) |
 | Ramjet | `models/src/ramjet.py` | Axisymmetric ramjet: inlet spike, diffuser, fuel ring, V-gutter flame holders, CD nozzle, 6 parts | Generic proportions (not from a source document) |
-| Bracket | `models/src/bracket.py` | L-bracket with M5 clearance holes | Starter/test model |
 
 All engine models are display/study models: the envelope and flowpath follow the sources, but blade
 counts (except the E3 fan), airfoils (flat or elliptical sections) and internal structure are simplified.
@@ -103,8 +102,8 @@ Notes:
   because SolidWorks resolves relative paths against its own working directory.
 - Re-importing creates new documents; none of the platforms keeps downstream features on a dumb
   import across changes, so do detailing (drawings, fillets on imported bodies) only on a frozen model.
-- `solidworks_import.py` was moved onto `sw_api.py` (typed COM wrappers) after the tests above; the
-  rewritten version has not been re-run yet (SolidWorks closed during the first attempt).
+- `solidworks_import.py` uses `sw_api.py` (typed COM wrappers) and default import options; retested
+  on the ramjet (6 parts, reopened assembly resolves every part from the output folder).
 
 ## Native parametric SolidWorks (no STEP)
 

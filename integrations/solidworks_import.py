@@ -15,7 +15,8 @@ from sw_api import DOC_ASSEMBLY, connect, save_as, typed
 
 def import_step(sw, step, out_dir):
     step, out_dir = step.resolve(), out_dir.resolve()  # SolidWorks resolves relative paths against its own cwd
-    model, errors = sw.LoadFile4(str(step), "r", sw.GetImportFileData(str(step)), 0)
+    # None = default import options; passing GetImportFileData() through the typed wrapper crashed SW 2026.
+    model, errors = sw.LoadFile4(str(step), "r", None, 0)
     if model is None:
         raise SystemExit(f"{step.name}: SolidWorks could not import it (swFileLoadError {errors})")
     model = typed(model, "IModelDoc2")
