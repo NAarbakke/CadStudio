@@ -8,6 +8,7 @@ and pushed into SolidWorks, Fusion or Onshape.
 |---|---|---|---|
 | Turbofan | `models/src/turbofan.py` | GE/NASA Energy Efficient Engine (E3): two-spool, long-duct mixed-flow turbofan, 12 parts | Dimensions and flowpath from the E3 NASA report ([resources/README.md](resources/README.md)) |
 | Turbojet | `models/src/turbojet.py` | NASA Lewis small expendable turbojet: single spool, 4-stage compressor, annular combustor, 1-stage turbine, 11 parts | Dimensions and flowpath from the NASA report ([resources/README.md](resources/README.md)) |
+| Nuclear turbojet | `models/src/nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, 13 parts | Layout from a period illustration, scaled to the AL-7 ([resources/README.md](resources/README.md)) |
 | Ramjet | `models/src/ramjet.py` | Axisymmetric ramjet: inlet spike, diffuser, fuel ring, V-gutter flame holders, CD nozzle, 6 parts | Generic proportions (not from a source document) |
 
 All engine models are display/study models: the envelope and flowpath follow the sources, but blade
@@ -40,6 +41,7 @@ One script per model is the single source of truth. Running it writes every decl
 .venv\Scripts\python models\src\turbofan.py    # -> models/STEP, models/STL, models/GLB (~3.5 min)
 .venv\Scripts\python models\src\turbojet.py
 .venv\Scripts\python models\src\ramjet.py
+.venv\Scripts\python models\src\nuclear_turbojet.py
 ```
 
 Outputs are cached by cadgen and only rebuilt when the script (or `models/src/lib/`) changes; add
@@ -57,7 +59,7 @@ resources/        source reports (NASA NTRS, public domain) + digitized figures 
 
 Tunable dimensions sit as constants and tables at the top of each script (gas-path radii, stage
 positions, blade counts, clearances). Each script's `parts()` returns one recipe per part: a list
-of named ops (revolve, spline, cut, blade ring, pins, loft; see `lib/shapes.py`). cadgen builds the
+of named ops (revolve, offset revolve, spline, cut, blade ring, pins, loft, duct; see `lib/shapes.py`). cadgen builds the
 STEP/STL/GLB from the recipes and `integrations/sw_build.py` builds the same recipes as native
 SolidWorks features. Blade rows come from `stage()`, which sizes tips and roots so flat blade
 corners never cut into the casing.
@@ -116,7 +118,7 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ```powershell
 # build a model as native parts + assembly -> models/SolidWorks/<model>/
-.venv\Scripts\python integrations\sw_build.py ramjet|turbojet|turbofan [--parts fan nacelle]
+.venv\Scripts\python integrations\sw_build.py ramjet|turbojet|turbofan|nuclear_turbojet [--parts fan nacelle]
 
 # check the native parts against the cadgen STEP (needs models/STEP/<model>.step)
 .venv\Scripts\python integrations\sw_verify.py turbofan
@@ -200,5 +202,8 @@ confirm a zero with the intersection check above.
   the tip).
 - **Volumes of spline solids**: build123d's `.volume` is ~10 % off on the lofted fan (132.9 vs
   146.7 L); use adaptive integration (`volume()` in `integrations/sw_verify.py`) for such parts.
+- **SolidWorks loft from an on-axis circle**: SOLIDWORKS 2026 refuses to loft from a full circle
+  centred on the engine axis when the next section moves off-axis (1 mm off works). `sw_api`
+  draws on-axis duct stations as two semicircles; arcs everywhere breaks other stations instead.
 - Plain booleans between two nearly identical solids (e.g. SolidWorks export vs cadgen part) can
   return nothing; use a fuzzy boolean (`common_volume()` in `sw_verify.py`).

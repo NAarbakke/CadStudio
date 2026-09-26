@@ -55,7 +55,7 @@ def main():
     folder = args.dir or pathlib.Path("models/SolidWorks") / args.model
     reference = {c.label: c for c in read_step(f"models/STEP/{args.model}.step").leaves}
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "models" / "src"))
-    lofted = {name for name, _, ops in importlib.import_module(args.model).parts() if any(op[0] == "loft" for op in ops)}
+    lofted = {name for name, _, ops in importlib.import_module(args.model).parts() if any(op[0] in ("loft", "duct") for op in ops)}
     sw = connect()
     tmp = pathlib.Path(tempfile.mkdtemp())
     ok = True
@@ -78,8 +78,8 @@ def main():
         tolerance = LOFT_TOLERANCE if name in lofted else TOLERANCE
         overlap = f"overlap {v_common / v_cad:7.2%}"
         if name in lofted and v_common < 0.01 * v_cad:
-            # OpenCascade's boolean gives up on 32 nearly coincident lofted blades; judge by volume only
-            overlap, v_common = "overlap n/a (boolean fails on lofted blades)", v_cad
+            # OpenCascade's boolean gives up on nearly coincident lofted surfaces; judge by volume only
+            overlap, v_common = "overlap n/a (boolean fails on lofts)", v_cad
         diff = max(abs(v_sw - v_cad), abs(v_common - v_cad)) / v_cad
         good = not errors and not loose and diff < tolerance
         ok &= good

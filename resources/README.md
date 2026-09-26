@@ -2,6 +2,7 @@
 
 All PDFs are NASA Technical Reports Server (NTRS) documents: US government works, public domain.
 `figures/` holds pages rendered from them (engine axis rotated horizontal where needed).
+`illustrations/` holds other reference pictures (provenance and rights as noted per model below).
 
 | File | Report | Used for |
 |---|---|---|
@@ -21,6 +22,7 @@ All PDFs are NASA Technical Reports Server (NTRS) documents: US government works
 | `figures/small_expendable_turbojet_1977_p21.png` | turbojet report Figures 1–2, cross-section and components |
 | `figures/NASA_small_turbojet_cross_section.png` | turbojet Figure 1 cropped (used for digitizing) |
 | `figures/small_expendable_turbojet_1977_p22.png` | turbojet report Figures 3–4, installations and instrumentation |
+| `figures/lyulka_offset_reactor_grid.png` | Lyulka illustration enlarged 5x with a pixel grid (used for digitizing) |
 
 ## Turbofan: GE/NASA E3 (turbofan.py)
 
@@ -83,3 +85,27 @@ dimension lines (0.798 mm/px axial, 0.775 mm/px radial), x = 0 at the nose tip, 
 
 Assumed: blade counts, airfoils, disk/shaft layout, nose-cone profile, and a 20 mm aft shift of the
 combustor dome so the compressor exit annulus stays open.
+
+## Nuclear turbojet: OKB-165 (Lyulka) offset-reactor direct-cycle design (nuclear_turbojet.py)
+
+Source: `illustrations/direct_cooling_offset_reactor_nuclear_turbojet/OKB Lyukola offset reactor
+nuclear turbojet design.jpg`, a 290 × 105 px side-view illustration of a Soviet 1950s design study
+(provided by the user; original publication unknown). Background: in the direct cycle the
+compressor air is ducted through the reactor core as its coolant and heated there instead of in a
+combustor ([aviation-history.com](http://www.aviation-history.com/articles/nuke-bombers.htm));
+Lyulka's OKB-165 developed engines for the Soviet nuclear-bomber programme.
+
+No dimensions are published. Scale: the compressor module (40 px tall) is set to the Ø1300 mm of
+Lyulka's contemporary AL-7 turbojet ([Wikipedia](https://en.wikipedia.org/wiki/Lyulka_AL-7)),
+giving 32.5 mm/px, x = (x_px − 5) × 32.5, r = |y_px − 67| × 32.5. Read off the drawing
+(`figures/lyulka_offset_reactor_grid.png`), ~±1 px (±30 mm):
+
+- Engine axis y = 67 px; nose cone px 5–28; compressor px 28–70 (Ø1300 to px 50, then smaller)
+- Reactor unit above the axis, centre y ≈ 37 px (975 mm up): inlet plenum px 82–125, main vessel
+  px 125–178 (y 14–60, Ø1500 mm), outlet transition px 178–235 falling to the turbine
+- Long shaft housing under the reactor, y 62–72 px; turbine px 235–250, nozzle to px 265,
+  tail cone to px 280 (~8.9 m overall)
+
+Assumed: AL-7-like 9-stage compressor and 2-stage turbine, blade counts and airfoils, round
+(not box-shaped) plenum and vessel, S-duct shapes between compressor, vessel and turbine (hidden in
+the drawing), wall thicknesses, and a plain reactor core seated on end grids.

@@ -244,6 +244,12 @@ class PartBuilder:
             typed(seg, "ISketchSegment").Select4(True, None)
         self.doc.SketchAddConstraints("sgFIXED")
 
+    def _fix_points(self, points):
+        self.doc.ClearSelection2(True)
+        for pt in points:
+            typed(pt, "ISketchPoint").Select4(True, None)
+        self.doc.SketchAddConstraints("sgFIXED")
+
     def _dimension_points(self, vertices, points):
         """Dimension every vertex from the origin: x<i> horizontally, r<i> vertically (named by vertex index)."""
         for i, (vertex, (x, r)) in enumerate(zip(vertices, points)):
@@ -260,9 +266,9 @@ class PartBuilder:
                 if disp is not None:  # None when already fully constrained (e.g. a point on the origin)
                     typed(typed(disp, "IDisplayDimension").GetDimension2(0), "IDimension").Name = f"{axis}{i}"
 
-    def _centerline(self, xs):
+    def _centerline(self, xs, y=0.0):
         self.sk.AddToDB = True
-        line = self.sk.CreateCenterLine((min(xs) - 50) * MM, 0, 0, (max(xs) + 50) * MM, 0, 0)
+        line = self.sk.CreateCenterLine((min(xs) - 50) * MM, y * MM, 0, (max(xs) + 50) * MM, y * MM, 0)
         self.sk.AddToDB = False
         self._fix([line])
 
@@ -314,18 +320,67 @@ class PartBuilder:
 
     # ---- ops (same names and arguments as the recipe ops in models/src/lib/shapes.py) ----
 
-    def revolve(self, name, points, cut=False):
-        """Closed (x, r) profile on the Front Plane revolved 360° about X; vertex i -> x<i>/r<i> in "<name>Profile"."""
+    def revolve(self, name, points, cut=False, axis_y=0.0):
+        """Closed (x, r) profile on the Front Plane revolved 360° about X (or a parallel line at axis_y).
+
+        Vertex i -> dimensions x<i>/r<i> in "<name>Profile", measured from the origin (r<i> = axis_y + r).
+        """
         self._sketch(self.planes[0])  # Front Plane: sketch coordinates = model X, Y
-        pts = [(float(x), float(r)) for x, r in points]
+        pts = [(float(x), float(r) + axis_y) for x, r in points]
         vertices, _ = self._polygon(pts)
-        self._centerline([x for x, _ in pts])
+        self._centerline([x for x, _ in pts], axis_y)
         self._dimension_points(vertices, pts)
         self._close_sketch(f"{name}Profile")
         return self._revolve(name, cut)
 
     def cut(self, name, points):
         return self.revolve(name, points, cut=True)
+
+    def offset_revolve(self, name, points, axis_y):
+        return self.revolve(name, points, axis_y=axis_y)
+
+    def duct(self, name, stations, wall):
+        """Hollow duct: loft through outer circles [(x, y_centre, r)], then cut-loft through circles r - wall.
+
+        Sketches "<name>Outer<i>"/"<name>Inner<i>" on planes "<name><i>Plane" normal to X.
+        """
+        outer, inner = [], []
+        for i, (x, y, r) in enumerate(stations):
+            plane = self._plane(f"{name}{i}Plane", [(self.planes[2], "PLANE")], 8, abs(x) * MM)  # Right Plane = YZ
+            for kind, radius, profiles in (("Outer", r, outer), ("Inner", r - wall, inner)):
+                to_sketch = self._sketch(plane)
+                self._on_plane(to_sketch, (x, y, 0), (1, 0, 0), name)
+                cx, cy, _ = to_sketch((x, y, 0))
+                # SolidWorks 2026 will not loft from a full circle centred on the engine axis (the same
+                # circle 1 mm off-axis works), so on-axis stations are two semicircles. Arcs everywhere
+                # make other station pairs fail instead, so off-axis stations stay plain circles.
+                left, right = ((cx - radius) * MM, cy * MM, 0), ((cx + radius) * MM, cy * MM, 0)
+                self.sk.AddToDB = True
+                if abs(y) < 1e-6:
+                    segs = [typed(self.sk.CreateArc(cx * MM, cy * MM, 0, *a, *b, 1), "ISketchArc")
+                            for a, b in ((right, left), (left, right))]
+                    self._merge(segs[0].GetEndPoint2(), segs[1].GetStartPoint2())
+                    self._merge(segs[1].GetEndPoint2(), segs[0].GetStartPoint2())
+                    self._merge(segs[0].GetCenterPoint2(), segs[1].GetCenterPoint2())
+                else:
+                    segs = [self.sk.CreateCircleByRadius(cx * MM, cy * MM, 0, radius * MM)]
+                self.sk.AddToDB = False
+                self._fix(segs)
+                if len(segs) == 2:  # a fixed arc only pins its circle; its ends can still slide along it
+                    self._fix_points([segs[0].GetStartPoint2(), segs[0].GetEndPoint2()])
+                profiles.append(self._close_sketch(f"{name}{kind}{i}"))
+        for profiles, cut in ((outer, False), (inner, True)):
+            self.doc.ClearSelection2(True)
+            for p in profiles:
+                p.Select2(True, 1)  # mark 1 = loft profiles
+            if cut:
+                feat = self.fm.InsertCutBlend(False, True, False, 1, 0, 0, False, 0, 0, 0, True, True)
+            else:
+                feat = self.fm.InsertProtrusionBlend2(False, True, False, 1, 0, 0, 1, 1, False, False, False, 0, 0, 0,
+                                                      True, True, True, 0)
+            if feat is None:
+                raise RuntimeError(f"{name}: {'cut ' if cut else ''}loft failed")
+            self.last_feature(f"{name}{'Bore' if cut else ''}")
 
     def spline(self, name, points):
         """Spline through (x, r) points (first one on the axis), closed down to the axis and revolved."""

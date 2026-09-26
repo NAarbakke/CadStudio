@@ -5,6 +5,7 @@ build() turns a recipe into a cadgen solid; integrations/sw_api.py PartBuilder.b
 same recipe into native SolidWorks features, so both outputs come from one set of numbers.
 
     ("revolve", name, points)                               closed (x, r) polygon revolved about X
+    ("offset_revolve", name, points, axis_y)                same, about a line parallel to X at height axis_y
     ("spline", name, points)                                spline through points (first on the axis), closed to the axis
     ("cut", name, points)                                   revolved polygon removed from everything before it
     ("torus", name, x, r, tube_r)
@@ -12,6 +13,7 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("pins", name, x, r0, r1, dia, n, angle=0)              n radial round pins from r0 to r1
     ("axial_pins", name, x, r, dia, length, n, angle=0)     n cylinders along X, centred on x
     ("loft", name, x, sections, n)                          n blades lofted through elliptical sections [(r, chord, thick, twist°)]
+    ("duct", name, stations, wall)                          hollow duct through circles [(x, y_centre, r_outer)], wall thickness
 
 `name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
 """
@@ -95,6 +97,29 @@ def loft_ring(x, sections, n):
     return _around(bd.Solid.make_loft(wires, ruled=True), n)
 
 
+def offset_revolve(points, axis_y):
+    return bd.Pos(0, axis_y, 0) * revolved(points)
+
+
+def duct_stations(start, end, n=9):
+    """n circle stations (x, y_centre, r) from start to end; the centreline is an S-bend (smoothstep)."""
+    out = []
+    for i in range(n):
+        t = i / (n - 1)
+        s = t * t * (3 - 2 * t)
+        out.append((start[0] + (end[0] - start[0]) * t, start[1] + (end[1] - start[1]) * s,
+                    start[2] + (end[2] - start[2]) * t))
+    return out
+
+
+def duct(stations, wall):
+    """Hollow duct lofted through circles on planes normal to X (ruled: see loft_ring)."""
+    def loft(dr):
+        return bd.Solid.make_loft([bd.Wire(bd.Edge.make_circle(r - dr, bd.Plane(origin=(x, y, 0), z_dir=(1, 0, 0))))
+                                   for x, y, r in stations], ruled=True)
+    return loft(0) - loft(wall)
+
+
 def tube_profile(x0, x1, r_in, r_out):
     return [(x0, r_in), (x1, r_in), (x1, r_out), (x0, r_out)]
 
@@ -104,7 +129,7 @@ def tube(x0, x1, r_in, r_out):
     return revolved(tube_profile(x0, x1, r_in, r_out))
 
 
-OPS = {"revolve": revolved, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
+OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
        "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring}
 
 
