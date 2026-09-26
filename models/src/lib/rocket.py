@@ -14,6 +14,22 @@ def ogive(length, r_base, n=14):
     return [(x, max(0.0, sqrt(rho ** 2 - (length - x) ** 2) + r_base - rho)) for x in xs]
 
 
+def smooth(points, per_segment=5):
+    """Monotone cubic (Fritsch-Carlson) through digitized (x, r) points: no overshoot, no facets."""
+    xs, ys = [p[0] for p in points], [p[1] for p in points]
+    d = [(ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]) for i in range(len(xs) - 1)]
+    m = [0.0 if d[i - 1] * d[i] <= 0 else 2 / (1 / d[i - 1] + 1 / d[i]) for i in range(1, len(d))]
+    m = [d[0]] + m + [d[-1]]
+    out = []
+    for i in range(len(d)):
+        h = xs[i + 1] - xs[i]
+        for k in range(per_segment):
+            t = k / per_segment
+            h00, h10, h01, h11 = 2 * t**3 - 3 * t**2 + 1, t**3 - 2 * t**2 + t, -2 * t**3 + 3 * t**2, t**3 - t**2
+            out.append((xs[i] + t * h, h00 * ys[i] + h10 * h * m[i] + h01 * ys[i + 1] + h11 * h * m[i + 1]))
+    return out + [points[-1]]
+
+
 def shell(outer, t):
     """Closed profile of a wall of thickness t under an outer (x, r) curve (tip on the axis allowed)."""
     inner = [(x, r - t) for x, r in outer if r - t > 0]
@@ -43,7 +59,8 @@ def _from_radius(pts, y0):
 
 
 def sphere(xc, r, n=12):
-    return [(xc - r * cos(pi * i / n), r * sin(pi * i / n)) for i in range(n + 1)]
+    """Half-circle profile; the end points are exactly on the axis (sin(pi) is 1e-16, not 0)."""
+    return [(xc - r * cos(pi * i / n), 0.0 if i in (0, n) else r * sin(pi * i / n)) for i in range(n + 1)]
 
 
 def motor(name, *, xe0, xe1, r, t, a, port_fwd, port_aft, bore, throat, exit, skirts=None, t_nozzle=12):

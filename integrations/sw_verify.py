@@ -17,6 +17,9 @@ from cadgen import read_step
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
 from OCP.BRepGProp import BRepGProp
 from OCP.GProp import GProp_GProps
+from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+from OCP.gp import gp_Pnt
+from OCP.TopAbs import TopAbs_IN
 from OCP.TopTools import TopTools_ListOfShape
 from sw_api import connect, features, open_doc, save_as, typed
 
@@ -46,6 +49,38 @@ def common_volume(a, b, fuzz=1e-3):
     return volume(op.Shape())
 
 
+def sampled_iou(a, b, n=600, seed=1):
+    """Overlap estimated by classifying random points in b's bounding box as inside a and/or b.
+
+    Fallback for when the fuzzy boolean returns nothing (cone tips, many nearly coincident faces).
+    """
+    import random
+    rnd, box = random.Random(seed), b.bounding_box()
+    def inside(shape, p):
+        return any(BRepClass3d_SolidClassifier(s.wrapped, gp_Pnt(*p), 1e-3).State() == TopAbs_IN for s in shape.solids())
+    both = either = 0
+    for _ in range(n):
+        p = (rnd.uniform(box.min.X, box.max.X), rnd.uniform(box.min.Y, box.max.Y), rnd.uniform(box.min.Z, box.max.Z))
+        ia, ib = inside(a, p), inside(b, p)
+        both += ia and ib
+        either += ia or ib
+    return both / either if either else 1.0
+
+
+def compare(native, cad, lofted):
+    """(good, v_native, v_cad, note) for a native CAD part against its cadgen part."""
+    v_native, v_cad = volume(native), volume(cad)
+    v_common = common_volume(native, cad)
+    tolerance = LOFT_TOLERANCE if lofted else TOLERANCE
+    note = f"overlap {v_common / v_cad:7.2%}"
+    if v_common < 0.01 * v_cad:  # the boolean gave up: check the geometry by point sampling instead
+        iou = sampled_iou(native, cad)
+        note = f"overlap {iou:7.2%} (sampled, boolean failed)"
+        v_common = v_cad if iou >= (0.99 if lofted else 0.998) else v_cad * iou
+    good = max(abs(v_native - v_cad), abs(v_common - v_cad)) / v_cad < tolerance
+    return good, v_native, v_cad, note
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("model")
@@ -72,16 +107,8 @@ def main():
         save_as(doc, step)
         sw.CloseDoc(doc.GetTitle())
 
-        native, cad = bd.import_step(str(step)), reference[name]
-        v_sw, v_cad = volume(native), volume(cad)
-        v_common = common_volume(native, cad)
-        tolerance = LOFT_TOLERANCE if name in lofted else TOLERANCE
-        overlap = f"overlap {v_common / v_cad:7.2%}"
-        if name in lofted and v_common < 0.01 * v_cad:
-            # OpenCascade's boolean gives up on nearly coincident lofted surfaces; judge by volume only
-            overlap, v_common = "overlap n/a (boolean fails on lofts)", v_cad
-        diff = max(abs(v_sw - v_cad), abs(v_common - v_cad)) / v_cad
-        good = not errors and not loose and diff < tolerance
+        good, v_sw, v_cad, overlap = compare(bd.import_step(str(step)), reference[name], name in lofted)
+        good = good and not errors and not loose
         ok &= good
         print(f"{'OK ' if good else 'BAD'} {name:20s} SW {v_sw / 1e6:9.4f} L  cadgen {v_cad / 1e6:9.4f} L  "
               f"{overlap}" + (f"  rebuild errors {errors}" if errors else "")

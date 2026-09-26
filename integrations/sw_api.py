@@ -82,8 +82,15 @@ def open_doc(sw, path):
     path = str(pathlib.Path(path).resolve())  # SolidWorks resolves relative paths against its own cwd
     kind = DOC_ASSEMBLY if path.upper().endswith(".SLDASM") else DOC_PART
     doc, errors, _warnings = sw.OpenDoc6(path, kind, 1, "", 0, 0)  # typed call returns out-params; 1 = Silent
+    if doc is None and errors == 65536:  # same file name already open from another folder
+        name = pathlib.Path(path).name.lower()
+        clash = [(d, t) for d, t, p in open_docs(sw) if pathlib.Path(p).name.lower() == name]
+        if clash and not any(d.GetSaveFlag() for d, _ in clash):  # only close documents with nothing unsaved
+            for _, t in clash:
+                sw.CloseDoc(t)
+            doc, errors, _warnings = sw.OpenDoc6(path, kind, 1, "", 0, 0)
     if doc is None:
-        hint = " - a document with the same name is open from another folder; close it" if errors == 65536 else ""
+        hint = " - a document with the same name, with unsaved changes, is open from another folder" if errors == 65536 else ""
         raise SystemExit(f"could not open {path} (swFileLoadError {errors}){hint}")
     return typed(doc, "IModelDoc2")
 

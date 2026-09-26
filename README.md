@@ -143,12 +143,33 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 - Free-standing rows (stator vanes) are body patterns; rows on a disk are feature patterns.
 - `sw_verify.py` exports each part to STEP and compares it with the cadgen part: volume and the
   overlap volume (fuzzy boolean), plus rebuild errors and fully defined sketches. Tolerance 0.1 %,
-  0.2 % for lofted parts (see Known issues).
+  0.2 % for lofted parts (see Known issues). When the overlap boolean returns nothing (cone tips,
+  many nearly coincident faces) it falls back to classifying 600 random points in both solids.
 - Build time (SOLIDWORKS 2026): ramjet ~1.5 min, turbojet ~4 min, turbofan ~30 min (the HPC stator
   part alone ~12 min: ten free-standing vane rows, each a body pattern).
 - Files saved by a 3DEXPERIENCE Makers licence are flagged personal-use.
 - pywin32 type wrappers: `sw_api` generates them on first use (`gencache.EnsureModule`); after a
   SolidWorks upgrade delete `%LOCALAPPDATA%\Temp\gen_py` to regenerate.
+
+## Native parametric FreeCAD
+
+`integrations/fc_build.py` builds the same recipes as a parametric FreeCAD document
+(`models/FreeCAD/<model>.FCStd`, git-ignored) and checks every part against the cadgen STEP:
+
+```powershell
+.venv\Scripts\python integrations\fc_build.py tsirkon          # add --no-verify to skip the check
+```
+
+- The venv evaluates the model's `parts()` into JSON (FreeCAD's own Python has no cadgen), then
+  `freecadcmd` runs `integrations/freecad/fc_builder.py`. Default FreeCAD path is
+  `%LOCALAPPDATA%\Programs\FreeCAD 1.1\bin\freecadcmd.exe`; override with `FREECADCMD`.
+- Part workbench features, editable in FreeCAD: revolve and fin profiles are fully constrained
+  sketches with dimensions `x<i>` / `r<i>`; blade, pin and cone rows are primitives
+  (`Part::Box`/`Part::Cylinder`) in a Draft polar array (edit `NumberPolar`); lofts and ducts are
+  `Part::Loft`; cuts are `Part::Cut` in recipe order.
+- No colours yet (freecadcmd has no GUI to store them).
+- Verified: ramjet, tsirkon (17 parts), oreshnik (13 parts) match cadgen at 100.00 % for every part;
+  the same two missiles also pass `sw_verify.py` in SolidWorks.
 
 ## Recommended workflow
 
@@ -164,6 +185,22 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 STEP import (`solidworks_import.py`) remains the quick path for looking at a model or sharing it
 with someone else.
+
+## Visual check loop
+
+`tools/render_check.py` renders a model from five views into one sheet (iso, rear 3/4, side, top,
+section) so the whole assembly can be reviewed at a glance, and optionally scores the side
+silhouette against a reference picture:
+
+```powershell
+.venv\Scripts\python tools\render_check.py models\STEP\tsirkon.step --hide launch_shroud `
+    --ref profile_builder\Tsirkon\resources\article\fig03.jpeg --ref-box 280,185,380,1055 --ref-rotate 90 --ref-tol 15 --length 8500
+```
+
+Outputs `tmp/check/<model>_sheet.png` and `<model>_overlay.png` (grey both, red model only, cyan
+reference only) with the silhouette IoU and the worst radius mismatch in mm. The reference is
+cropped to `--ref-box`, rotated/flipped to nose-left and fitted by length. Current scores: Tsirkon
+0.958 vs the Luftlage side render, Oreshnik 0.961 vs the Luftlage reconstruction.
 
 ## Verification done
 

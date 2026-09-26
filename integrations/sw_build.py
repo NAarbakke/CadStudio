@@ -47,6 +47,11 @@ def main():
     if not args.parts:
         build_assembly(sw, paths, out / f"{args.model}.SLDASM")
         print("built", out / f"{args.model}.SLDASM")
+    # Close what was built (all saved above): leaving parts open blocks the next model's parts
+    # with the same file name (e.g. stage1_case) from opening.
+    for _, title, path in sorted(open_docs(sw), key=lambda d: not d[1].upper().endswith(".SLDASM")):
+        if path and pathlib.Path(path).parent == out:
+            sw.CloseDoc(title)
 
 
 if __name__ == "__main__":
