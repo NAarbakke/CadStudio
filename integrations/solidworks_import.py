@@ -3,7 +3,7 @@
     .venv\\Scripts\\python integrations\\solidworks_import.py models\\STEP\\turbofan.step [more.step ...]
 
 A STEP assembly becomes an .SLDASM plus one .SLDPRT per part; a single body becomes an .SLDPRT.
-These are plain imported solids (no feature tree); for parametric parts see sw_build_ramjet.py.
+These are plain imported solids (no feature tree); for parametric parts see sw_build.py.
 Outputs go to models/SolidWorks/<name>/ unless --out is given. Windows + SolidWorks only (COM API).
 """
 import argparse

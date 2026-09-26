@@ -83,7 +83,8 @@ def open_doc(sw, path):
     kind = DOC_ASSEMBLY if path.upper().endswith(".SLDASM") else DOC_PART
     doc, errors, _warnings = sw.OpenDoc6(path, kind, 1, "", 0, 0)  # typed call returns out-params; 1 = Silent
     if doc is None:
-        raise SystemExit(f"could not open {path} (swFileLoadError {errors})")
+        hint = " - a document with the same name is open from another folder; close it" if errors == 65536 else ""
+        raise SystemExit(f"could not open {path} (swFileLoadError {errors}){hint}")
     return typed(doc, "IModelDoc2")
 
 
@@ -112,16 +113,39 @@ def dimensions(doc):
 
 # ---------- building parts ----------
 
+def _array(values):
+    return win32com.client.VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [float(v) for v in values])
+
+
+def _about_x(p, angle):
+    """Rotate model point p (mm) about the X axis by `angle` degrees (right-handed, as build123d Rot)."""
+    a = math.radians(angle)
+    x, y, z = p
+    return x, y * math.cos(a) - z * math.sin(a), y * math.sin(a) + z * math.cos(a)
+
+
 class PartBuilder:
-    """Builds one native part: named, fully dimensioned revolve sketches and circular patterns about X."""
+    """Builds one native part from a recipe (models/src/lib/shapes.py): one method per op kind.
+
+    Revolve sketches are fully dimensioned (vertex i -> x<i>/r<i>); blade, pin and loft sections are
+    fixed geometry on named reference planes; rings are one feature + a circular pattern whose count
+    is the global variable "<name>_count".
+    """
 
     def __init__(self, sw):
         self.sw = sw
         self.doc = typed(sw.NewDocument(sw.GetUserPreferenceStringValue(PREF_TEMPLATE_PART), 0, 0, 0), "IModelDoc2")
         self.ext, self.sk, self.fm = self.doc.Extension, self.doc.SketchManager, self.doc.FeatureManager
+        self.mu = typed(sw.GetMathUtility(), "IMathUtility")
         self.planes = [f.Name for f in features(self.doc) if f.GetTypeName2() == "RefPlane"]  # Front, Top, Right
         self._axis = None
-        self.globals = {}
+        self.ref_geometry = []  # our planes/axis, hidden on save
+
+    def build(self, ops):
+        for kind, name, *args in ops:
+            getattr(self, kind)(name, *args)
+
+    # ---- selection, naming, equations ----
 
     def select(self, name, kind, append=False, mark=0, xyz=(0, 0, 0)):
         x, y, z = (c * MM for c in xyz)
@@ -135,29 +159,83 @@ class PartBuilder:
 
     def add_global(self, name, value):
         """Global variable (Tools > Equations) that features can be driven from."""
-        self.globals[name] = value
-        mgr = self.doc.GetEquationMgr()
-        mgr.Add2(-1, f'"{name}" = {value}', True)
+        self.doc.GetEquationMgr().Add2(-1, f'"{name}" = {value}', True)
 
     def link(self, dim_full_name, global_name):
         """Drive a dimension (e.g. "D1@Struts") from a global variable."""
         self.doc.GetEquationMgr().Add2(-1, f'"{dim_full_name}" = "{global_name}"', True)
 
+    # ---- reference geometry ----
+
+    def axis(self):
+        """Reference axis along X (Front ∩ Top plane), created once."""
+        if self._axis is None:
+            self.doc.ClearSelection2(True)
+            self.select(self.planes[0], "PLANE")
+            self.select(self.planes[1], "PLANE", append=True)
+            self.doc.InsertAxis2(True)
+            self._axis = self.last_feature("EngineAxis")
+            self.ref_geometry.append(("EngineAxis", "AXIS"))
+        return self._axis
+
+    def _plane(self, name, refs, c1, v1, c2=0, v2=0):
+        """Reference plane from [(ref name, kind)] + swRefPlaneReferenceConstraints_e (8 distance, 4 coincident, 16 angle)."""
+        self.doc.ClearSelection2(True)
+        for i, (ref, kind) in enumerate(refs):
+            self.select(ref, kind, append=i > 0, mark=i)
+        if self.fm.InsertRefPlane(c1, v1, c2, v2, 0, 0) is None:
+            raise RuntimeError(f"{name}: reference plane failed")
+        self.ref_geometry.append((name, "PLANE"))
+        return self.last_feature(name).Name
+
+    def _radial_plane(self, name, r, angle):
+        """Plane normal to the radial direction at `angle` (deg about X from +Y), at distance r from the axis."""
+        base = self.planes[1]  # Top Plane (XZ), normal +Y
+        if angle:
+            self.axis()
+            base = self._plane(f"{name}Angle", [("EngineAxis", "AXIS"), (base, "PLANE")], 4, 0, 16, math.radians(angle))
+        return self._plane(f"{name}Plane", [(base, "PLANE")], 8, r * MM)
+
+    # ---- sketches ----
+
+    def _sketch(self, plane):
+        """Open a sketch on `plane`; returns f(model point mm) -> sketch point mm (x, y, z)."""
+        self.doc.ClearSelection2(True)
+        self.select(plane, "PLANE")
+        self.sk.InsertSketch(True)
+        xf = typed(self.sk.ActiveSketch, "ISketch").ModelToSketchTransform
+
+        def to_sketch(p):
+            q = typed(typed(self.mu.CreatePoint(_array(c * MM for c in p)), "IMathPoint").MultiplyTransform(xf), "IMathPoint")
+            return tuple(c / MM for c in q.ArrayData)
+        return to_sketch
+
+    def _close_sketch(self, name):
+        self.sk.InsertSketch(True)
+        return self.last_feature(name)
+
+    def _on_plane(self, to_sketch, origin, normal, what):
+        """Check the sketch plane passes through `origin`; return True if `normal` points out of its +Z side."""
+        z0 = to_sketch(origin)[2]
+        if abs(z0) > 1e-3:
+            raise RuntimeError(f"{what}: sketch plane is {z0:.3f} mm off the intended position")
+        return to_sketch(tuple(o + n for o, n in zip(origin, normal)))[2] > 0
+
+    def _merge(self, a, b):
+        self.doc.ClearSelection2(True)
+        typed(a, "ISketchPoint").Select4(False, None)
+        typed(b, "ISketchPoint").Select4(True, None)
+        self.doc.SketchAddConstraints("sgMERGEPOINTS")
+
     def _polygon(self, pts):
-        """Closed polyline with merged vertices; returns one ISketchPoint per vertex."""
+        """Closed polyline (sketch mm) with merged vertices; returns (vertex ISketchPoints, lines)."""
         self.sk.AddToDB = True
         lines = [typed(self.sk.CreateLine(x0 * MM, y0 * MM, 0, x1 * MM, y1 * MM, 0), "ISketchLine")
                  for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1])]
         self.sk.AddToDB = False
-        vertices = []
         for prev, line in zip(lines[-1:] + lines[:-1], lines):
-            start, end = typed(line.GetStartPoint2(), "ISketchPoint"), typed(prev.GetEndPoint2(), "ISketchPoint")
-            self.doc.ClearSelection2(True)
-            start.Select4(False, None)
-            end.Select4(True, None)
-            self.doc.SketchAddConstraints("sgMERGEPOINTS")
-            vertices.append(typed(line.GetStartPoint2(), "ISketchPoint"))
-        return vertices, lines
+            self._merge(line.GetStartPoint2(), prev.GetEndPoint2())
+        return [typed(line.GetStartPoint2(), "ISketchPoint") for line in lines], lines
 
     def _fix(self, segments):
         """Fix sketch geometry in place (fully defined, not meant to be edited by dimension)."""
@@ -182,56 +260,171 @@ class PartBuilder:
                 if disp is not None:  # None when already fully constrained (e.g. a point on the origin)
                     typed(typed(disp, "IDisplayDimension").GetDimension2(0), "IDimension").Name = f"{axis}{i}"
 
-    def revolve(self, points, name):
-        """Closed (x, r) profile on the Front Plane, revolved 360° about the X axis.
-
-        Vertex i gets driving dimensions x<i> and r<i> in sketch "<name>Profile".
-        """
-        self.doc.ClearSelection2(True)
-        self.select(self.planes[0], "PLANE")
-        self.sk.InsertSketch(True)
-        pts = [(float(x), float(r)) for x, r in points]
-        vertices, _ = self._polygon(pts)
-        xs = [x for x, _ in pts]
+    def _centerline(self, xs):
         self.sk.AddToDB = True
-        centerline = self.sk.CreateCenterLine((min(xs) - 50) * MM, 0, 0, (max(xs) + 50) * MM, 0, 0)
+        line = self.sk.CreateCenterLine((min(xs) - 50) * MM, 0, 0, (max(xs) + 50) * MM, 0, 0)
         self.sk.AddToDB = False
-        self._fix([centerline])
-        self._dimension_points(vertices, pts)
-        self.sk.InsertSketch(True)
-        self.last_feature(f"{name}Profile")
-        feat = self.fm.FeatureRevolve2(True, True, False, False, False, False, 0, 0, 2 * math.pi, 0,
-                                       False, False, 0, 0, 0, 0, 0, True, True, True)
-        if feat is None:
-            raise RuntimeError(f"revolve {name} failed")
-        return self.last_feature(name)
+        self._fix([line])
 
-    def axis(self):
-        """Reference axis along X (Front ∩ Top plane), created once."""
-        if self._axis is None:
-            self.doc.ClearSelection2(True)
-            self.select(self.planes[0], "PLANE")
-            self.select(self.planes[1], "PLANE", append=True)
-            self.doc.InsertAxis2(True)
-            self._axis = self.last_feature("EngineAxis")
-        return self._axis
+    # ---- features ----
 
-    def revolve_circle(self, x, r, radius, name):
-        """Torus: circle of `radius` centred at (x, r) on the Front Plane, revolved about X."""
-        self.doc.ClearSelection2(True)
-        self.select(self.planes[0], "PLANE")
-        self.sk.InsertSketch(True)
-        self.sk.AddToDB = True
-        circle = self.sk.CreateCircleByRadius(x * MM, r * MM, 0, radius * MM)
-        centerline = self.sk.CreateCenterLine((x - radius - 50) * MM, 0, 0, (x + radius + 50) * MM, 0, 0)
-        self.sk.AddToDB = False
-        self._fix([circle, centerline])
-        self.sk.InsertSketch(True)
-        self.last_feature(f"{name}Profile")
-        if self.fm.FeatureRevolve2(True, True, False, False, False, False, 0, 0, 2 * math.pi, 0,
+    def _revolve(self, name, cut=False):
+        if self.fm.FeatureRevolve2(True, True, False, cut, False, False, 0, 0, 2 * math.pi, 0,
                                    False, False, 0, 0, 0, 0, 0, True, True, True) is None:
             raise RuntimeError(f"revolve {name} failed")
         return self.last_feature(name)
+
+    def _extrude(self, name, depth, outward=True, midplane=False):
+        # FeatureExtrusion3: Sd, Flip, Dir, T1 (0 blind, 6 mid plane), T2, D1, D2, ... Merge, UseFeatScope, UseAutoSelect
+        if self.fm.FeatureExtrusion3(True, False, not outward, 6 if midplane else 0, 0, depth * MM, 0,
+                                     False, False, False, False, 0, 0, False, False, False, False,
+                                     True, True, True, 0, 0, False) is None:
+            raise RuntimeError(f"{name}: extrude failed")
+        return self.last_feature(name)
+
+    def _bodies(self):
+        return [typed(b, "IBody2") for b in typed(self.doc, "IPartDoc").GetBodies2(0, True) or []]  # 0 = solid
+
+    def _pattern(self, seed, name, n, bodies_before):
+        """Circular pattern of `seed` about the engine axis; count driven by global "<name>_count".
+
+        A seed that merged into an existing body (blades on a disk) is patterned as a feature; a seed
+        that made its own body (free-standing stator vanes) is patterned as a body.
+        """
+        axis = self.axis()
+        self.doc.ClearSelection2(True)
+        bodies = self._bodies()
+        # Only a seed that added a body is free-standing; a seed that fused bodies renames the merged
+        # body, so a name check alone would pattern the whole merged body. GetBodies2 order is arbitrary.
+        new_bodies = [b for b in bodies if b.Name not in bodies_before] if len(bodies) > len(bodies_before) else []
+        if new_bodies:
+            data = typed(self.doc.SelectionManager, "ISelectionMgr").CreateSelectData()
+            data.Mark = 256  # bodies to pattern
+            for body in new_bodies:
+                body.Select2(True, data)
+        else:
+            seed.Select2(False, 4)  # mark 4 = features to pattern
+        axis.Select2(True, 1)   # mark 1 = pattern axis
+        if self.fm.FeatureCircularPattern5(n, 2 * math.pi, False, "NULL", False, True, False, False,
+                                           False, False, 1, 0, "NULL", False) is None:
+            raise RuntimeError(f"{name}: circular pattern failed")
+        self.last_feature(name)
+        self.add_global(f"{name}_count", n)
+        self.link(f"D1@{name}", f"{name}_count")
+
+    # ---- ops (same names and arguments as the recipe ops in models/src/lib/shapes.py) ----
+
+    def revolve(self, name, points, cut=False):
+        """Closed (x, r) profile on the Front Plane revolved 360° about X; vertex i -> x<i>/r<i> in "<name>Profile"."""
+        self._sketch(self.planes[0])  # Front Plane: sketch coordinates = model X, Y
+        pts = [(float(x), float(r)) for x, r in points]
+        vertices, _ = self._polygon(pts)
+        self._centerline([x for x, _ in pts])
+        self._dimension_points(vertices, pts)
+        self._close_sketch(f"{name}Profile")
+        return self._revolve(name, cut)
+
+    def cut(self, name, points):
+        return self.revolve(name, points, cut=True)
+
+    def spline(self, name, points):
+        """Spline through (x, r) points (first one on the axis), closed down to the axis and revolved."""
+        self._sketch(self.planes[0])
+        pts = [(float(x), float(r)) for x, r in points]
+        (x0, _), (xl, rl) = pts[0], pts[-1]
+        self.sk.AddToDB = True
+        spl = typed(self.sk.CreateSpline2(_array(c * MM for x, r in pts for c in (x, r, 0)), False), "ISketchSpline")
+        down = typed(self.sk.CreateLine(xl * MM, rl * MM, 0, xl * MM, 0, 0), "ISketchLine")
+        back = typed(self.sk.CreateLine(xl * MM, 0, 0, x0 * MM, 0, 0), "ISketchLine")
+        self.sk.AddToDB = False
+        self._merge(spl.GetPoints2()[-1], down.GetStartPoint2())
+        self._merge(down.GetEndPoint2(), back.GetStartPoint2())
+        self._merge(back.GetEndPoint2(), spl.GetPoints2()[0])
+        self._centerline([x0, xl])
+        vertices = [typed(p, "ISketchPoint") for p in spl.GetPoints2()] + [typed(down.GetEndPoint2(), "ISketchPoint")]
+        self._dimension_points(vertices, pts + [(xl, 0)])
+        self._close_sketch(f"{name}Profile")
+        return self._revolve(name)
+
+    def torus(self, name, x, r, tube_r):
+        """Circle of radius tube_r centred at (x, r) on the Front Plane, revolved about X."""
+        self._sketch(self.planes[0])
+        self.sk.AddToDB = True
+        circle = self.sk.CreateCircleByRadius(x * MM, r * MM, 0, tube_r * MM)
+        self.sk.AddToDB = False
+        self._fix([circle])
+        self._centerline([x - tube_r, x + tube_r])
+        self._close_sketch(f"{name}Profile")
+        return self._revolve(name)
+
+    def _radial_ring(self, name, x, r0, r1, n, angle, draw):
+        """Section drawn by draw(to_sketch, rot) on a radial plane at r0, extruded out to r1, patterned n times."""
+        self.axis()  # before any selection: creating it clears the selection set
+        before = {b.Name for b in self._bodies()}
+        to_sketch = self._sketch(self._radial_plane(name, r0, angle))
+        rot = lambda p: _about_x(p, angle)
+        outward = self._on_plane(to_sketch, rot((x, r0, 0)), rot((0, 1, 0)), name)
+        self._fix(draw(to_sketch, rot))
+        self._close_sketch(f"{name}Sketch")
+        self._pattern(self._extrude(f"{name}Blade", r1 - r0, outward), name, n, before)
+
+    def ring(self, name, x, r0, r1, chord, thick, n, stagger, angle=0):
+        """n flat blades (chord x thick, staggered about the radial axis) from r0 to r1; span = D1@<name>Blade."""
+        a = math.radians(stagger)  # build123d Rot(0, stagger, 0): local (u, w) -> (u cos a + w sin a, -u sin a + w cos a)
+        corners = [(x + u * math.cos(a) + w * math.sin(a), r0, -u * math.sin(a) + w * math.cos(a))
+                   for u, w in ((-chord / 2, -thick / 2), (chord / 2, -thick / 2), (chord / 2, thick / 2), (-chord / 2, thick / 2))]
+        self._radial_ring(name, x, r0, r1, n, angle,
+                          lambda to_sketch, rot: self._polygon([to_sketch(rot(c))[:2] for c in corners])[1])
+
+    def pins(self, name, x, r0, r1, dia, n, angle=0):
+        """n radial round pins of diameter dia from r0 to r1."""
+        def draw(to_sketch, rot):
+            cx, cy, _ = to_sketch(rot((x, r0, 0)))
+            self.sk.AddToDB = True
+            circle = self.sk.CreateCircleByRadius(cx * MM, cy * MM, 0, dia / 2 * MM)
+            self.sk.AddToDB = False
+            return [circle]
+        self._radial_ring(name, x, r0, r1, n, angle, draw)
+
+    def axial_pins(self, name, x, r, dia, length, n, angle=0):
+        """n cylinders along X centred on x (mid-plane extrude from a plane at x)."""
+        self.axis()
+        before = {b.Name for b in self._bodies()}
+        to_sketch = self._sketch(self._plane(f"{name}Plane", [(self.planes[2], "PLANE")], 8, abs(x) * MM))
+        centre = _about_x((x, r, 0), angle)
+        self._on_plane(to_sketch, centre, (1, 0, 0), name)
+        cx, cy, _ = to_sketch(centre)
+        self.sk.AddToDB = True
+        circle = self.sk.CreateCircleByRadius(cx * MM, cy * MM, 0, dia / 2 * MM)
+        self.sk.AddToDB = False
+        self._fix([circle])
+        self._close_sketch(f"{name}Sketch")
+        self._pattern(self._extrude(f"{name}Pin", length, midplane=True), name, n, before)
+
+    def loft(self, name, x, sections, n):
+        """n blades lofted through closed-spline sections [(r, chord, thick, twist°)] on radial planes.
+
+        Section points come from blade_section() in models/src/lib/shapes.py, the same points cadgen lofts.
+        """
+        from lib.shapes import blade_section  # models/src is on sys.path (see sw_build.py)
+        self.axis()
+        before, profiles = {b.Name for b in self._bodies()}, []
+        for i, (r, chord, thick, twist) in enumerate(sections):
+            to_sketch = self._sketch(self._radial_plane(f"{name}{i}", r, 0))
+            self._on_plane(to_sketch, (x, r, 0), (0, 1, 0), name)
+            pts = [to_sketch(p) for p in blade_section(x, r, chord, thick, twist)]
+            self.sk.AddToDB = True
+            spline = self.sk.CreateSpline2(_array(c * MM for p in pts + pts[:1] for c in p), False)  # repeated start = closed
+            self.sk.AddToDB = False
+            self._fix([spline])
+            profiles.append(self._close_sketch(f"{name}Section{i}"))
+        self.doc.ClearSelection2(True)
+        for p in profiles:
+            p.Select2(True, 1)  # mark 1 = loft profiles
+        if self.fm.InsertProtrusionBlend2(False, True, False, 1, 0, 0, 1, 1, False, False, False, 0, 0, 0,
+                                          True, True, True, 0) is None:
+            raise RuntimeError(f"{name}: loft failed")
+        self._pattern(self.last_feature(f"{name}Blade"), name, n, before)
 
     def color(self, hex_rgb):
         """Part appearance colour from '#RRGGBB'."""
@@ -239,55 +432,13 @@ class PartBuilder:
         values[0:3] = [int(hex_rgb[i:i + 2], 16) / 255 for i in (1, 3, 5)]
         self.doc.MaterialPropertyValues = values
 
-    def blade_ring(self, x, r0, r1, chord, thick, n, stagger, name, round_section=False):
-        """One flat staggered blade (sketched on a plane at radius r0, extruded to r1) + circular pattern of n.
-
-        round_section=True makes a round pin of diameter `chord` instead (thick/stagger ignored).
-        Editable afterwards: global "<name>_count" drives the pattern count; the extrude depth
-        (span) is D1@<name>Blade and the plane offset (root radius) is D1@<name>Plane.
-        """
-        axis = self.axis()  # before any selection: creating it clears the selection set
-        self.doc.ClearSelection2(True)
-        self.select(self.planes[1], "PLANE")  # Top Plane (XZ), normal +Y = radial direction
-        plane = self.fm.InsertRefPlane(8, r0 * MM, 0, 0, 0, 0)  # 8 = swRefPlaneReferenceConstraint_Distance
-        if plane is None:
-            raise RuntimeError(f"{name}: offset plane failed")
-        plane_name = self.last_feature(f"{name}Plane").Name
-        self.doc.ClearSelection2(True)
-        self.select(plane_name, "PLANE")
-        self.sk.InsertSketch(True)
-        # Sketch coordinates on this plane: sketch X = model X, sketch Y = model -Z (Top Plane orientation).
-        a = math.radians(stagger)
-        u, v = (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
-        cx, cy = x, 0.0
-        corners = [(cx + su * chord / 2 * u[0] + sv * thick / 2 * v[0], cy + su * chord / 2 * u[1] + sv * thick / 2 * v[1])
-                   for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
-        if round_section:
-            self.sk.AddToDB = True
-            section = [self.sk.CreateCircleByRadius(cx * MM, 0, 0, chord / 2 * MM)]
-            self.sk.AddToDB = False
-        else:
-            section = self._polygon(corners)[1]
-        self._fix(section)
-        self.sk.InsertSketch(True)
-        self.last_feature(f"{name}Sketch")
-        feat = self.fm.FeatureExtrusion3(True, False, False, 0, 0, (r1 - r0) * MM, 0, False, False, False, False,
-                                         0, 0, False, False, False, False, True, True, True, 0, 0, False)
-        if feat is None:
-            raise RuntimeError(f"{name}: blade extrude failed")
-        blade = self.last_feature(f"{name}Blade")
-        self.doc.ClearSelection2(True)
-        blade.Select2(False, 4)  # mark 4 = features to pattern
-        axis.Select2(True, 1)    # mark 1 = pattern axis
-        pat = self.fm.FeatureCircularPattern5(n, 2 * math.pi, False, "NULL", False, True, False, False,
-                                              False, False, 1, 0, "NULL", False)
-        if pat is None:
-            raise RuntimeError(f"{name}: circular pattern failed")
-        self.last_feature(name)
-        self.add_global(f"{name}_count", n)
-        self.link(f"D1@{name}", f"{name}_count")
-
     def save(self, path):
+        self.doc.ClearSelection2(True)
+        for name, kind in self.ref_geometry:
+            self.select(name, kind, append=True)
+        if self.ref_geometry:
+            self.doc.BlankRefGeom()  # hide construction planes/axis
+        self.doc.ClearSelection2(True)
         self.doc.ForceRebuild3(False)
         save_as(self.doc, path)
         return path

@@ -1,5 +1,21 @@
-"""Shared factories for axisymmetric engine models. Axis = +X, profiles are (x, r) in mm."""
-from math import cos, radians, sin, sqrt
+"""Shared factories for axisymmetric engine models. Axis = +X, profiles are (x, r) in mm.
+
+Parts are described as recipes: a list of ops applied in order (each op is added, "cut" removes).
+build() turns a recipe into a cadgen solid; integrations/sw_api.py PartBuilder.build() turns the
+same recipe into native SolidWorks features, so both outputs come from one set of numbers.
+
+    ("revolve", name, points)                               closed (x, r) polygon revolved about X
+    ("spline", name, points)                                spline through points (first on the axis), closed to the axis
+    ("cut", name, points)                                   revolved polygon removed from everything before it
+    ("torus", name, x, r, tube_r)
+    ("ring", name, x, r0, r1, chord, thick, n, stagger, angle=0)   n flat blades from r0 to r1
+    ("pins", name, x, r0, r1, dia, n, angle=0)              n radial round pins from r0 to r1
+    ("axial_pins", name, x, r, dia, length, n, angle=0)     n cylinders along X, centred on x
+    ("loft", name, x, sections, n)                          n blades lofted through elliptical sections [(r, chord, thick, twist°)]
+
+`name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
+"""
+from math import cos, pi, radians, sin, sqrt
 
 from cadgen import build123d as bd
 
@@ -36,15 +52,68 @@ def tip_radius(r_limit, chord, thick, stagger):
     return sqrt(r_limit ** 2 - z_ext ** 2)
 
 
-def blade_ring(x, r0, r1, chord, thick, n, stagger):
+def _around(shape, n, angle=0):
+    return [bd.Rot(angle + 360 / n * i, 0, 0) * shape for i in range(n)]
+
+
+def blade_ring(x, r0, r1, chord, thick, n, stagger, angle=0):
     """n flat blades spanning radius r0..r1 at axial station x, staggered about their radial axis."""
-    blade = bd.Pos(x, (r0 + r1) / 2, 0) * bd.Rot(0, stagger, 0) * bd.Box(chord, r1 - r0, thick)
-    return [bd.Rot(360 / n * i, 0, 0) * blade for i in range(n)]
+    return _around(bd.Pos(x, (r0 + r1) / 2, 0) * bd.Rot(0, stagger, 0) * bd.Box(chord, r1 - r0, thick), n, angle)
+
+
+def pins(x, r0, r1, dia, n, angle=0):
+    return _around(bd.Pos(x, (r0 + r1) / 2, 0) * bd.Cylinder(dia / 2, r1 - r0, rotation=(90, 0, 0)), n, angle)
+
+
+def axial_pins(x, r, dia, length, n, angle=0):
+    return _around(bd.Pos(x, r, 0) * bd.Cylinder(dia / 2, length, rotation=(0, 90, 0)), n, angle)
+
+
+def torus(x, r, tube_r):
+    return bd.Pos(x, 0, 0) * bd.Torus(r, tube_r, rotation=(0, 90, 0))
+
+
+def blade_section(x, r, chord, thick, twist, k=16):
+    """k points around an elliptical blade section on the plane y=r, chord turned `twist`° from +X toward +Z.
+
+    Sections are closed splines through these points rather than true ellipses: point i of every
+    section sits at the same angle, so a twisted loft joins matching points in any CAD kernel
+    (lofts between ellipses have no defined start point and pinch or bulge when twisted).
+    """
+    a = radians(twist)
+    return [(x + u * cos(a) + w * sin(a), r, u * sin(a) - w * cos(a))
+            for u, w in ((chord / 2 * cos(t), thick / 2 * sin(t)) for t in (2 * pi * i / k for i in range(k)))]
+
+
+def loft_ring(x, sections, n):
+    """n blades lofted through blade_section() splines, one per (r, chord, thick, twist) station.
+
+    Ruled (straight between stations): OpenCascade's smooth loft overshoots ~12 % next to the end
+    sections; ruled through closely spaced stations matches SolidWorks' smooth loft to 0.01 % in volume.
+    """
+    wires = [bd.Wire(bd.Edge.make_spline(blade_section(x, *s), periodic=True)) for s in sections]
+    return _around(bd.Solid.make_loft(wires, ruled=True), n)
+
+
+def tube_profile(x0, x1, r_in, r_out):
+    return [(x0, r_in), (x1, r_in), (x1, r_out), (x0, r_out)]
 
 
 def tube(x0, x1, r_in, r_out):
     """Hollow cylinder along X from x0 to x1."""
-    return revolved([(x0, r_in), (x1, r_in), (x1, r_out), (x0, r_out)])
+    return revolved(tube_profile(x0, x1, r_in, r_out))
+
+
+OPS = {"revolve": revolved, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
+       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring}
+
+
+def build(ops):
+    """cadgen solid from a recipe (see module docstring)."""
+    part = bd.Part()
+    for kind, _name, *args in ops:
+        part = part - revolved(*args) if kind == "cut" else part + OPS[kind](*args)
+    return part
 
 
 def labelled(shape, label, color):
@@ -54,16 +123,21 @@ def labelled(shape, label, color):
     return shape
 
 
+def assemble(parts, label):
+    """Compound of labelled parts from [(label, color, ops), ...]."""
+    return bd.Compound(children=[labelled(build(ops), name, color) for name, color, ops in parts], label=label)
+
+
 def x_half(chord, thick, stagger):
     """Axial half-extent of a staggered flat blade."""
     a = radians(stagger)
     return chord / 2 * abs(cos(a)) + thick / 2 * abs(sin(a))
 
 
-def stage(kind, x, chord, thick, n, stagger, *, bore, outer, hub, gap):
-    """One blade row in a gas path given as (x, r) tables `outer` (casing) and `hub`.
+def stage(name, kind, x, chord, thick, n, stagger, *, bore, outer, hub, gap):
+    """Ops for one blade row in a gas path given as (x, r) tables `outer` (casing) and `hub`.
 
-    Rotor ("R"): disk from `bore` to the hub + blades reaching to `gap` below the casing.
+    Rotor ("R"): disk "<name>Disk" from `bore` to the hub + blades reaching to `gap` below the casing.
     Stator ("S"): vanes from `gap` above the hub, flush with the casing (corner-safe).
     """
     dx = x_half(chord, thick, stagger)
@@ -71,6 +145,7 @@ def stage(kind, x, chord, thick, n, stagger, *, bore, outer, hub, gap):
     if kind == "R":
         r_hub = interp(hub, x)
         tip = tip_radius(r_out - gap, chord, thick, stagger)
-        return [tube(x - dx - 2, x + dx + 2, bore, r_hub), *blade_ring(x, r_hub - 5, tip, chord, thick, n, stagger)]
+        return [("revolve", f"{name}Disk", tube_profile(x - dx - 2, x + dx + 2, bore, r_hub)),
+                ("ring", name, x, r_hub - 5, tip, chord, thick, n, stagger)]
     root = max(interp(hub, x - dx), interp(hub, x + dx)) + gap
-    return blade_ring(x, root, tip_radius(r_out, chord, thick, stagger), chord, thick, n, stagger)
+    return [("ring", name, x, root, tip_radius(r_out, chord, thick, stagger), chord, thick, n, stagger)]
