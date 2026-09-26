@@ -50,7 +50,7 @@ models/
   src/            model scripts (edit these)
   src/lib/        shared factories: revolve profiles, blade rows, clearances (shapes.py)
   STEP/ STL/ GLB/ generated exports
-  SolidWorks/     generated: <model>_native/ (sw_build.py), <model>/ (solidworks_import.py)
+  SolidWorks/     generated: <model>/ (sw_build.py), imported/<model>/ (solidworks_import.py)
 integrations/     native SolidWorks builder/editor; STEP import into SolidWorks, Fusion, Onshape
 resources/        source reports (NASA NTRS, public domain) + digitized figures and data
 ```
@@ -83,7 +83,7 @@ non-parametric (dumb-solid) import. Edit the script, rebuild, re-import.
 
 | Script | Platform | How it connects | Status |
 |---|---|---|---|
-| `integrations/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/SolidWorks/<name>/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
+| `integrations/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/SolidWorks/imported/<name>/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
 | `integrations/fusion/CadStudioImport/` | Autodesk Fusion | Fusion script (runs inside Fusion only): file picker, imports each STEP into a new design | Not tested (Fusion not installed here) |
 | `integrations/onshape_import.py` | Onshape | REST API (`/translations`), API-key basic auth; creates or reuses a document | Not tested (needs API keys) |
 
@@ -115,16 +115,16 @@ tree: fully defined sketches, named dimensions, circular patterns driven by glob
 No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ```powershell
-# build a model as native parts + assembly -> models/SolidWorks/<model>_native/
+# build a model as native parts + assembly -> models/SolidWorks/<model>/
 .venv\Scripts\python integrations\sw_build.py ramjet|turbojet|turbofan [--parts fan nacelle]
 
 # check the native parts against the cadgen STEP (needs models/STEP/<model>.step)
 .venv\Scripts\python integrations\sw_verify.py turbofan
 
 # inspect and edit any .SLDPRT/.SLDASM (rebuilds, refuses to save on rebuild errors)
-.venv\Scripts\python integrations\sw_edit.py list models\SolidWorks\ramjet_native\inlet.SLDPRT
-.venv\Scripts\python integrations\sw_edit.py set  models\SolidWorks\ramjet_native\inlet.SLDPRT SpikeStruts_count=6 r1@CowlProfile=210
-.venv\Scripts\python integrations\sw_edit.py suppress models\SolidWorks\ramjet_native\inlet.SLDPRT SpikeStruts
+.venv\Scripts\python integrations\sw_edit.py list models\SolidWorks\ramjet\inlet.SLDPRT
+.venv\Scripts\python integrations\sw_edit.py set  models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts_count=6 r1@CowlProfile=210
+.venv\Scripts\python integrations\sw_edit.py suppress models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts
 ```
 
 - Feature tree per recipe op: revolves/cuts/splines are `<Name>Profile` sketches with every

@@ -6,7 +6,7 @@ Geometry comes from the model's parts() recipes in models/src (the same numbers 
 uses). Revolved profiles are sketches "<Feature>Profile" whose vertex i is driven by dimensions
 x<i>/r<i> (mm from the origin); blade/pin rows are one feature + a circular pattern whose count is
 the global variable "<Feature>_count". Edit them with integrations/sw_edit.py.
-Output: models/SolidWorks/<model>_native/. SolidWorks must be open.
+Output: models/SolidWorks/<model>/. SolidWorks must be open.
 """
 import argparse
 import importlib
@@ -25,7 +25,7 @@ def main():
     ap.add_argument("--parts", nargs="+", help="build only these parts (no assembly)")
     ap.add_argument("--out", type=pathlib.Path)
     args = ap.parse_args()
-    out = (args.out or pathlib.Path("models/SolidWorks") / f"{args.model}_native").resolve()
+    out = (args.out or pathlib.Path("models/SolidWorks") / args.model).resolve()
     out.mkdir(parents=True, exist_ok=True)
     recipes = importlib.import_module(args.model).parts()  # model data only; nothing is built on import
     if args.parts:

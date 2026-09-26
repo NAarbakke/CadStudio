@@ -1,6 +1,6 @@
 """Check native SolidWorks parts against the cadgen STEP export of the same model.
 
-    .venv\\Scripts\\python integrations\\sw_verify.py turbojet [--dir models/SolidWorks/turbojet_native] [--parts ...]
+    .venv\\Scripts\\python integrations\\sw_verify.py turbojet [--dir models/SolidWorks/turbojet] [--parts ...]
 
 Per part: rebuild errors, sketch status (all must be fully defined), and the geometry itself: the
 part is exported to STEP and compared with the cadgen part (volume, and volume of the overlap, so a
@@ -52,7 +52,7 @@ def main():
     ap.add_argument("--dir", type=pathlib.Path)
     ap.add_argument("--parts", nargs="+")
     args = ap.parse_args()
-    folder = args.dir or pathlib.Path("models/SolidWorks") / f"{args.model}_native"
+    folder = args.dir or pathlib.Path("models/SolidWorks") / args.model
     reference = {c.label: c for c in read_step(f"models/STEP/{args.model}.step").leaves}
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "models" / "src"))
     lofted = {name for name, _, ops in importlib.import_module(args.model).parts() if any(op[0] == "loft" for op in ops)}
