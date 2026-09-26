@@ -347,6 +347,12 @@ class PartBuilder:
         self._close_sketch(f"{name}Profile")
         self._pattern(self._extrude(f"{name}Blade", thick, midplane=True), name, n, before)
 
+    def offset_ring(self, name, points, axis_y, n):
+        """offset_revolve seed "<name>Seed" patterned n times about the engine axis."""
+        self.axis()
+        before = {b.Name for b in self._bodies()}
+        self._pattern(self.revolve(f"{name}Seed", points, axis_y=axis_y), name, n, before)
+
     def offset_revolve(self, name, points, axis_y):
         return self.revolve(name, points, axis_y=axis_y)
 

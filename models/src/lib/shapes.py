@@ -14,6 +14,7 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("axial_pins", name, x, r, dia, length, n, angle=0)     n cylinders along X, centred on x
     ("loft", name, x, sections, n)                          n blades lofted through elliptical sections [(r, chord, thick, twist°)]
     ("duct", name, stations, wall)                          hollow duct through circles [(x, y_centre, r_outer)], wall thickness
+    ("offset_ring", name, points, axis_y, n)                n copies of an offset_revolve around X (e.g. a ring of cones)
     ("fins", name, points, thick, n)                        n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
 
 `name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
@@ -102,6 +103,10 @@ def offset_revolve(points, axis_y):
     return bd.Pos(0, axis_y, 0) * revolved(points)
 
 
+def offset_ring(points, axis_y, n):
+    return _around(offset_revolve(points, axis_y), n)
+
+
 def duct_stations(start, end, n=9):
     """n circle stations (x, y_centre, r) from start to end; the centreline is an S-bend (smoothstep)."""
     out = []
@@ -141,7 +146,7 @@ def tube(x0, x1, r_in, r_out):
     return revolved(tube_profile(x0, x1, r_in, r_out))
 
 
-OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
+OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "offset_ring": offset_ring, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
        "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring}
 
 
