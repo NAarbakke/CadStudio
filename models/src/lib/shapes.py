@@ -14,6 +14,7 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("axial_pins", name, x, r, dia, length, n, angle=0)     n cylinders along X, centred on x
     ("loft", name, x, sections, n)                          n blades lofted through elliptical sections [(r, chord, thick, twist°)]
     ("duct", name, stations, wall)                          hollow duct through circles [(x, y_centre, r_outer)], wall thickness
+    ("fins", name, points, thick, n)                        n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
 
 `name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
 """
@@ -120,6 +121,17 @@ def duct(stations, wall):
     return loft(0) - loft(wall)
 
 
+def fins(points, thick, n):
+    """n flat fins: (x, r) planform in the XY plane, extruded symmetrically to `thick` in Z."""
+    with bd.BuildPart() as fin:
+        with bd.BuildSketch(bd.Plane.XY):
+            with bd.BuildLine():
+                bd.Polyline(*points, close=True)
+            bd.make_face()
+        bd.extrude(amount=thick / 2, both=True)
+    return _around(fin.part, n)
+
+
 def tube_profile(x0, x1, r_in, r_out):
     return [(x0, r_in), (x1, r_in), (x1, r_out), (x0, r_out)]
 
@@ -129,7 +141,7 @@ def tube(x0, x1, r_in, r_out):
     return revolved(tube_profile(x0, x1, r_in, r_out))
 
 
-OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
+OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
        "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring}
 
 

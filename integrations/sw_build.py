@@ -1,6 +1,6 @@
 """Build a model as native, parametric SolidWorks parts + assembly (feature tree, named dimensions).
 
-    .venv\\Scripts\\python integrations\\sw_build.py ramjet|turbojet|turbofan|nuclear_turbojet [--parts NAME ...] [--out DIR]
+    .venv\\Scripts\\python integrations\\sw_build.py MODEL [--parts NAME ...] [--out DIR]
 
 Geometry comes from the model's parts() recipes in models/src (the same numbers the STEP export
 uses). Revolved profiles are sketches "<Feature>Profile" whose vertex i is driven by dimensions
@@ -21,7 +21,7 @@ from sw_api import PartBuilder, build_assembly, connect, no_dimension_prompts, o
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("model", choices=["ramjet", "turbojet", "turbofan", "nuclear_turbojet"])
+    ap.add_argument("model", help="model script name in models/src, e.g. turbofan")
     ap.add_argument("--parts", nargs="+", help="build only these parts (no assembly)")
     ap.add_argument("--out", type=pathlib.Path)
     args = ap.parse_args()

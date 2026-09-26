@@ -336,6 +336,17 @@ class PartBuilder:
     def cut(self, name, points):
         return self.revolve(name, points, cut=True)
 
+    def fins(self, name, points, thick, n):
+        """n flat fins: (x, r) planform on the Front Plane ("<name>Profile", vertices x<i>/r<i>), mid-plane extrude, pattern."""
+        self.axis()
+        before = {b.Name for b in self._bodies()}
+        self._sketch(self.planes[0])
+        pts = [(float(x), float(r)) for x, r in points]
+        vertices, _ = self._polygon(pts)
+        self._dimension_points(vertices, pts)
+        self._close_sketch(f"{name}Profile")
+        self._pattern(self._extrude(f"{name}Blade", thick, midplane=True), name, n, before)
+
     def offset_revolve(self, name, points, axis_y):
         return self.revolve(name, points, axis_y=axis_y)
 
