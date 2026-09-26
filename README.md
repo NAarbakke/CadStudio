@@ -10,6 +10,7 @@ and pushed into SolidWorks, Fusion or Onshape.
 | Turbojet | `models/src/turbojet.py` | NASA Lewis small expendable turbojet: single spool, 4-stage compressor, annular combustor, 1-stage turbine, 11 parts | Dimensions and flowpath from the NASA report ([resources/README.md](resources/README.md)) |
 | Nuclear turbojet | `models/src/nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, 13 parts | Layout from a period illustration, scaled to the AL-7 ([resources/README.md](resources/README.md)) |
 | Tsirkon | `models/src/tsirkon.py` | 3M22 Tsirkon (Zircon), external shape only: two-stage solid-rocket layout, radome, composite second stage, alloy control section with 4 folding fins, first stage with raceways, 4 parts | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`profile_builder/Tsirkon/resources/`) |
+| Oreshnik | `models/src/oreshnik.py` | Oreshnik IRBM, external shape only: ogive nose fairing, instrumentation band, two solid stages, aft skirt, 5 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m) (`profile_builder/Oreshnik/resources/`) |
 | Ramjet | `models/src/ramjet.py` | Axisymmetric ramjet: inlet spike, diffuser, fuel ring, V-gutter flame holders, CD nozzle, 6 parts | Generic proportions (not from a source document) |
 
 All engine models are display/study models: the envelope and flowpath follow the sources, but blade
@@ -44,6 +45,7 @@ One script per model is the single source of truth. Running it writes every decl
 .venv\Scripts\python models\src\ramjet.py
 .venv\Scripts\python models\src\nuclear_turbojet.py
 .venv\Scripts\python models\src\tsirkon.py
+.venv\Scripts\python models\src\oreshnik.py
 ```
 
 Outputs are cached by cadgen and only rebuilt when the script (or `models/src/lib/`) changes; add
