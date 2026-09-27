@@ -1,4 +1,4 @@
-"""Runs inside FreeCAD (freecadcmd): builds a model's recipes (JSON from fc_build.py) as parametric
+"""Runs inside FreeCAD (freecadcmd): builds a model's recipes (JSON from freecad_build.py) as parametric
 Part-workbench features and saves an .FCStd, plus one STEP per part for verification.
 
 Environment: FC_JSON (recipe file), FC_OUT (.FCStd path), FC_STEPS (folder for per-part STEP).
@@ -126,7 +126,7 @@ def op_axial_pins(name, x, r, dia, length, n, angle=0):
 
 
 def op_loft(name, x, sections, n):
-    """sections: [(r, [(x, r, z) points])] precomputed by fc_build.py (same points as cadgen)."""
+    """sections: [(r, [(x, r, z) points])] precomputed by freecad_build.py (same points as cadgen)."""
     sks = []
     for i, (r, pts) in enumerate(sections):
         sk = sketch(f"{name}Section{i}", App.Placement(V(0, r, 0), App.Rotation(V(1, 0, 0), 90)))  # local (x, y) = global (X, Z)

@@ -1,10 +1,10 @@
 """Build a model as a parametric FreeCAD document and check it against the cadgen STEP.
 
-    .venv\\Scripts\\python integrations\\freecad\\fc_build.py MODEL [--no-verify]
+    .venv\\Scripts\\python integrations\\freecad\\freecad_build.py MODEL [--no-verify]
 
 Evaluates models/src/<MODEL>.py parts() here (FreeCAD's Python has no cadgen), writes the recipes
-as JSON, runs integrations/freecad/fc_builder.py in freecadcmd, and saves
-models/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like solidworks/sw_verify.py
+as JSON, runs integrations/freecad/freecad_builder.py in freecadcmd, and saves
+models/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like solidworks/solidworks_verify.py
 (volume, fuzzy-boolean overlap). FreeCAD 1.x; set FREECADCMD if it is not in the default place.
 """
 import argparse
@@ -61,7 +61,7 @@ def main():
     (work / "steps").mkdir()
     (work / "recipe.json").write_text(json.dumps(recipes(args.model)), encoding="utf-8")
     env = dict(os.environ, FC_JSON=str(work / "recipe.json"), FC_OUT=str(out), FC_STEPS=str(work / "steps"))
-    run = subprocess.run([FREECADCMD, str(ROOT / "integrations" / "freecad" / "fc_builder.py")],
+    run = subprocess.run([FREECADCMD, str(ROOT / "integrations" / "freecad" / "freecad_builder.py")],
                          env=env, capture_output=True, text=True)
     log = run.stdout + run.stderr
     for line in log.splitlines():

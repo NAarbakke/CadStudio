@@ -485,7 +485,7 @@ class PartBuilder:
 
         Section points come from blade_section() in models/src/lib/shapes.py, the same points cadgen lofts.
         """
-        from lib.shapes import blade_section  # models/src is on sys.path (see sw_build.py)
+        from lib.shapes import blade_section  # models/src is on sys.path (see solidworks_build.py)
         self.axis()
         before, profiles = {b.Name for b in self._bodies()}, []
         for i, (r, chord, thick, twist) in enumerate(sections):

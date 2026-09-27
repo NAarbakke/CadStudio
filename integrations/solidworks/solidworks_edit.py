@@ -1,8 +1,8 @@
 """Inspect and edit SolidWorks files programmatically: dimensions, global variables, feature suppression.
 
-    sw_edit.py list  FILE [--filter TEXT]
-    sw_edit.py set   FILE NAME=VALUE [NAME=VALUE ...] [--save-as PATH]
-    sw_edit.py suppress|unsuppress FILE FEATURE [FEATURE ...] [--save-as PATH]
+    solidworks_edit.py list  FILE [--filter TEXT]
+    solidworks_edit.py set   FILE NAME=VALUE [NAME=VALUE ...] [--save-as PATH]
+    solidworks_edit.py suppress|unsuppress FILE FEATURE [FEATURE ...] [--save-as PATH]
 
 NAME is a global variable (e.g. SpikeStruts_count) or a dimension "<dim>@<feature/sketch>"
 (e.g. r1@CowlProfile, D1@SpikeStrutsBlade). Lengths are mm, angles degrees, counts integers.
@@ -14,7 +14,7 @@ import math
 import pathlib
 import re
 
-from sw_api import connect, dimensions, features, open_doc, open_docs, save_as, typed
+from solidworks_api import connect, dimensions, features, open_doc, open_docs, save_as, typed
 
 ANGULAR, INTEGER = 1, 2  # IDimension.GetType() on SW 2026: 0 = length, 1 = angle, 2 = integer (pattern count)
 ALL_CONFIGS = 2                      # swSetValueInConfiguration_e.swSetValue_InAllConfigurations
@@ -85,7 +85,7 @@ def cmd_set(doc, assignments):
             continue
         dim = doc.Parameter(name)
         if dim is None:
-            raise SystemExit(f"no global variable or dimension named {name!r} (see: sw_edit.py list FILE)")
+            raise SystemExit(f"no global variable or dimension named {name!r} (see: solidworks_edit.py list FILE)")
         dim = typed(dim, "IDimension")
         old, unit = to_user(dim)
         status = dim.SetSystemValue3(to_system(dim, value), ALL_CONFIGS, None)

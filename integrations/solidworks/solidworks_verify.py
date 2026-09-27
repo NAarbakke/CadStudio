@@ -1,6 +1,6 @@
 """Check native SolidWorks parts against the cadgen STEP export of the same model.
 
-    .venv\\Scripts\\python integrations\\solidworks\\sw_verify.py turbojet [--dir models/SolidWorks/turbojet] [--parts ...]
+    .venv\\Scripts\\python integrations\\solidworks\\solidworks_verify.py turbojet [--dir models/SolidWorks/turbojet] [--parts ...]
 
 Per part: rebuild errors, sketch status (all must be fully defined), and the geometry itself: the
 part is exported to STEP and compared with the cadgen part (volume, and volume of the overlap, so a
@@ -18,7 +18,7 @@ from cadgen import read_step
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # integrations/, for compare.py
 
 from compare import compare  # noqa: E402
-from sw_api import connect, features, open_doc, save_as, typed  # noqa: E402
+from solidworks_api import connect, features, open_doc, save_as, typed  # noqa: E402
 
 STATES = {1: "unknown", 2: "under", 3: "fully", 4: "over", 5: "no-solution"}  # swConstrainedStatus_e
 

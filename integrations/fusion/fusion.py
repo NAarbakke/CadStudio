@@ -1,7 +1,8 @@
 """Fusion script: import CadStudio STEP files, each into a new Fusion design.
 
 Install: Fusion > Utilities > Scripts and Add-Ins > "+" > Script from my computer >
-pick this CadStudioImport folder. Run it, then choose one or more .step files.
+pick this fusion folder, then Run it and choose one or more .step files. Fusion requires the folder,
+.py and .manifest to share a name, so keep them as fusion/fusion.*.
 Fusion runs scripts only inside the app; there is no external API to drive it.
 """
 import os
@@ -9,7 +10,7 @@ import traceback
 
 import adsk.core
 
-DEFAULT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "models", "STEP"))
+DEFAULT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "models", "STEP"))
 
 
 def run(context):

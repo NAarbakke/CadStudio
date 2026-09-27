@@ -1,11 +1,11 @@
 """Build a model as native, parametric SolidWorks parts + assembly (feature tree, named dimensions).
 
-    .venv\\Scripts\\python integrations\\solidworks\\sw_build.py MODEL [--parts NAME ...] [--out DIR]
+    .venv\\Scripts\\python integrations\\solidworks\\solidworks_build.py MODEL [--parts NAME ...] [--out DIR]
 
 Geometry comes from the model's parts() recipes in models/src (the same numbers the STEP export
 uses). Revolved profiles are sketches "<Feature>Profile" whose vertex i is driven by dimensions
 x<i>/r<i> (mm from the origin); blade/pin rows are one feature + a circular pattern whose count is
-the global variable "<Feature>_count". Edit them with integrations/solidworks/sw_edit.py.
+the global variable "<Feature>_count". Edit them with integrations/solidworks/solidworks_edit.py.
 Output: models/SolidWorks/<model>/. SolidWorks must be open.
 """
 import argparse
@@ -16,7 +16,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "models" / "src"))
 
-from sw_api import PartBuilder, build_assembly, connect, no_dimension_prompts, open_docs  # noqa: E402
+from solidworks_api import PartBuilder, build_assembly, connect, no_dimension_prompts, open_docs  # noqa: E402
 
 
 def main():
