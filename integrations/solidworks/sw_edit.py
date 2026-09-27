@@ -14,7 +14,7 @@ import math
 import pathlib
 import re
 
-from sw_api import connect, dimensions, features, open_doc, open_docs, save_as
+from sw_api import connect, dimensions, features, open_doc, open_docs, save_as, typed
 
 ANGULAR, INTEGER = 1, 2  # IDimension.GetType() on SW 2026: 0 = length, 1 = angle, 2 = integer (pattern count)
 ALL_CONFIGS = 2                      # swSetValueInConfiguration_e.swSetValue_InAllConfigurations
@@ -86,7 +86,6 @@ def cmd_set(doc, assignments):
         dim = doc.Parameter(name)
         if dim is None:
             raise SystemExit(f"no global variable or dimension named {name!r} (see: sw_edit.py list FILE)")
-        from sw_api import typed
         dim = typed(dim, "IDimension")
         old, unit = to_user(dim)
         status = dim.SetSystemValue3(to_system(dim, value), ALL_CONFIGS, None)

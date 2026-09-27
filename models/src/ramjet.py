@@ -5,7 +5,7 @@ Inlet spike + cowl -> subsonic diffuser -> fuel injector ring -> V-gutter flame 
 -> combustion chamber -> convergent-divergent nozzle. No moving parts.
 
 parts() is the single description of the geometry: cadgen builds the STEP/STL/GLB from it and
-integrations/sw_build.py builds the same parts as native SolidWorks features.
+integrations/solidworks/sw_build.py builds the same parts as native SolidWorks features.
 """
 from cadgen import glb, step, stl
 from lib.shapes import assemble, interp, tip_radius

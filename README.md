@@ -57,14 +57,14 @@ models/
   src/lib/        shared factories: revolve profiles, blade rows, clearances (shapes.py)
   STEP/ STL/ GLB/ generated exports
   SolidWorks/     generated: <model>/ (sw_build.py), imported/<model>/ (solidworks_import.py)
-integrations/     native SolidWorks builder/editor; STEP import into SolidWorks, Fusion, Onshape
+integrations/     solidworks/ (native builder, editor, verify, STEP import), freecad/, fusion/, onshape/
 resources/        source reports (NASA NTRS, public domain) + digitized figures and data
 ```
 
 Tunable dimensions sit as constants and tables at the top of each script (gas-path radii, stage
 positions, blade counts, clearances). Each script's `parts()` returns one recipe per part: a list
 of named ops (revolve, offset revolve, offset ring, spline, cut, blade ring, pins, loft, duct, fins; see `lib/shapes.py`; missile helpers: shells, ogives, solid motors in `lib/rocket.py`). cadgen builds the
-STEP/STL/GLB from the recipes and `integrations/sw_build.py` builds the same recipes as native
+STEP/STL/GLB from the recipes and `integrations/solidworks/sw_build.py` builds the same recipes as native
 SolidWorks features. Blade rows come from `stage()`, which sizes tips and roots so flat blade
 corners never cut into the casing.
 
@@ -89,17 +89,17 @@ non-parametric (dumb-solid) import. Edit the script, rebuild, re-import.
 
 | Script | Platform | How it connects | Status |
 |---|---|---|---|
-| `integrations/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/SolidWorks/imported/<name>/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
+| `integrations/solidworks/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/SolidWorks/imported/<name>/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
 | `integrations/fusion/CadStudioImport/` | Autodesk Fusion | Fusion script (runs inside Fusion only): file picker, imports each STEP into a new design | Not tested (Fusion not installed here) |
-| `integrations/onshape_import.py` | Onshape | REST API (`/translations`), API-key basic auth; creates or reuses a document | Not tested (needs API keys) |
+| `integrations/onshape/onshape_import.py` | Onshape | REST API (`/translations`), API-key basic auth; creates or reuses a document | Not tested (needs API keys) |
 
 ```powershell
 # SolidWorks: open SolidWorks and log in first (the 3DEXPERIENCE edition cannot be started over COM)
-.venv\Scripts\python integrations\solidworks_import.py models\STEP\turbofan.step [more.step ...] [--close] [--out DIR]
+.venv\Scripts\python integrations\solidworks\solidworks_import.py models\STEP\turbofan.step [more.step ...] [--close] [--out DIR]
 
 # Onshape: keys from https://dev-portal.onshape.com/keys
 $env:ONSHAPE_ACCESS_KEY = "..."; $env:ONSHAPE_SECRET_KEY = "..."
-.venv\Scripts\python integrations\onshape_import.py models\STEP\turbofan.step [--document <id>] [--flatten]
+.venv\Scripts\python integrations\onshape\onshape_import.py models\STEP\turbofan.step [--document <id>] [--flatten]
 ```
 
 Fusion: Utilities > Scripts and Add-Ins > "+" > Script from my computer > pick
@@ -116,21 +116,21 @@ Notes:
 
 ## Native parametric SolidWorks (no STEP)
 
-`integrations/sw_api.py` drives SolidWorks' own modeller over COM, so the result has a real feature
+`integrations/solidworks/sw_api.py` drives SolidWorks' own modeller over COM, so the result has a real feature
 tree: fully defined sketches, named dimensions, circular patterns driven by global variables.
 No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ```powershell
 # build a model as native parts + assembly -> models/SolidWorks/<model>/
-.venv\Scripts\python integrations\sw_build.py MODEL [--parts fan nacelle]   # MODEL = script name in models/src
+.venv\Scripts\python integrations\solidworks\sw_build.py MODEL [--parts fan nacelle]   # MODEL = script name in models/src
 
 # check the native parts against the cadgen STEP (needs models/STEP/<model>.step)
-.venv\Scripts\python integrations\sw_verify.py turbofan
+.venv\Scripts\python integrations\solidworks\sw_verify.py turbofan
 
 # inspect and edit any .SLDPRT/.SLDASM (rebuilds, refuses to save on rebuild errors)
-.venv\Scripts\python integrations\sw_edit.py list models\SolidWorks\ramjet\inlet.SLDPRT
-.venv\Scripts\python integrations\sw_edit.py set  models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts_count=6 r1@CowlProfile=210
-.venv\Scripts\python integrations\sw_edit.py suppress models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts
+.venv\Scripts\python integrations\solidworks\sw_edit.py list models\SolidWorks\ramjet\inlet.SLDPRT
+.venv\Scripts\python integrations\solidworks\sw_edit.py set  models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts_count=6 r1@CowlProfile=210
+.venv\Scripts\python integrations\solidworks\sw_edit.py suppress models\SolidWorks\ramjet\inlet.SLDPRT SpikeStruts
 ```
 
 - Feature tree per recipe op: revolves/cuts/splines are `<Name>Profile` sketches with every
@@ -153,11 +153,11 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ## Native parametric FreeCAD
 
-`integrations/fc_build.py` builds the same recipes as a parametric FreeCAD document
+`integrations/freecad/fc_build.py` builds the same recipes as a parametric FreeCAD document
 (`models/FreeCAD/<model>.FCStd`, git-ignored) and checks every part against the cadgen STEP:
 
 ```powershell
-.venv\Scripts\python integrations\fc_build.py tsirkon          # add --no-verify to skip the check
+.venv\Scripts\python integrations\freecad\fc_build.py tsirkon          # add --no-verify to skip the check
 ```
 
 - The venv evaluates the model's `parts()` into JSON (FreeCAD's own Python has no cadgen), then
@@ -242,7 +242,7 @@ confirm a zero with the intersection check above.
   that matches SolidWorks' smooth loft to 0.006 % in blade volume, slices within 0.5 % (1.8 % near
   the tip).
 - **Volumes of spline solids**: build123d's `.volume` is ~10 % off on the lofted fan (132.9 vs
-  146.7 L); use adaptive integration (`volume()` in `integrations/sw_verify.py`) for such parts.
+  146.7 L); use adaptive integration (`volume()` in `integrations/compare.py`) for such parts.
 - **SolidWorks loft from an on-axis circle**: SOLIDWORKS 2026 refuses to loft from a full circle
   centred on the engine axis when the next section moves off-axis (1 mm off works). `sw_api`
   draws on-axis duct stations as two semicircles; arcs everywhere breaks other stations instead.

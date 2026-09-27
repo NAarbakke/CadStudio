@@ -2,7 +2,7 @@
 
     set ONSHAPE_ACCESS_KEY=...   (create a key pair at https://dev-portal.onshape.com/keys)
     set ONSHAPE_SECRET_KEY=...
-    .venv\\Scripts\\python integrations\\onshape_import.py models\\STEP\\turbofan.step [more.step ...]
+    .venv\\Scripts\\python integrations\\onshape\\onshape_import.py models\\STEP\\turbofan.step [more.step ...]
 
 Creates a new document named "CadStudio" unless --document <id> is given (the id is the
 long hex string after /documents/ in the Onshape URL). Each run adds new tabs; it does not

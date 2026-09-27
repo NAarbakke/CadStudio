@@ -1,7 +1,7 @@
 """Shared factories for axisymmetric engine models. Axis = +X, profiles are (x, r) in mm.
 
 Parts are described as recipes: a list of ops applied in order (each op is added, "cut" removes).
-build() turns a recipe into a cadgen solid; integrations/sw_api.py PartBuilder.build() turns the
+build() turns a recipe into a cadgen solid; integrations/solidworks/sw_api.py PartBuilder.build() turns the
 same recipe into native SolidWorks features, so both outputs come from one set of numbers.
 
     ("revolve", name, points)                               closed (x, r) polygon revolved about X

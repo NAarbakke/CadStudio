@@ -1,10 +1,10 @@
 """Build a model as a parametric FreeCAD document and check it against the cadgen STEP.
 
-    .venv\\Scripts\\python integrations\\fc_build.py MODEL [--no-verify]
+    .venv\\Scripts\\python integrations\\freecad\\fc_build.py MODEL [--no-verify]
 
 Evaluates models/src/<MODEL>.py parts() here (FreeCAD's Python has no cadgen), writes the recipes
 as JSON, runs integrations/freecad/fc_builder.py in freecadcmd, and saves
-models/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like sw_verify.py
+models/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like solidworks/sw_verify.py
 (volume, fuzzy-boolean overlap). FreeCAD 1.x; set FREECADCMD if it is not in the default place.
 """
 import argparse
@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "models" / "src"))
 FREECADCMD = os.environ.get("FREECADCMD", str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/FreeCAD 1.1/bin/freecadcmd.exe"))
 
@@ -38,7 +38,7 @@ def recipes(model):
 def verify(model, steps):
     from cadgen import build123d as bd
     from cadgen import read_step
-    from sw_verify import compare
+    from compare import compare
     ref = {c.label: c for c in read_step(str(ROOT / "models" / "STEP" / f"{model}.step")).leaves}
     lofted = {n for n, _, ops in importlib.import_module(model).parts() if any(o[0] in ("loft", "duct") for o in ops)}
     ok = True
