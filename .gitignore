@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
 tmp/
+profile_builder/
 
 # models/STEP, STL, GLB, SolidWorks each carry their own .gitignore (generated files, kept out of git)
