@@ -10,7 +10,7 @@ Double-click `Open CAD Viewer.cmd` in the project root, or run from PowerShell:
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py --open
-.venv\Scripts\python tools\start_viewer.py turbofan --open
+.venv\Scripts\python tools\start_viewer.py ge_e3_turbofan --open
 .venv\Scripts\python tools\start_viewer.py naca_lewis_16in_ramjet --open
 ```
 
@@ -27,18 +27,18 @@ of airfoil faces and can take longer on a cold browser/cache.
 
 | Model source stem | STEP file under the served directory |
 |---|---|
-| `f1` | `STEP/f1.step` |
+| `rocketdyne_f1` | `STEP/rocketdyne_f1.step` |
 | `naca_lewis_16in_ramjet` | `STEP/naca_lewis_16in_ramjet.step` |
-| `nuclear_turbojet` | `STEP/nuclear_turbojet.step` |
+| `lyulka_nuclear_turbojet` | `STEP/lyulka_nuclear_turbojet.step` |
 | `oreshnik` | `STEP/oreshnik.step` |
 | `tsirkon` | `STEP/tsirkon.step` |
-| `turbofan` | `STEP/turbofan.step` |
-| `turbojet` | `STEP/turbojet.step` |
+| `ge_e3_turbofan` | `STEP/ge_e3_turbofan.step` |
+| `nasa_lewis_small_turbojet` | `STEP/nasa_lewis_small_turbojet.step` |
 
 For a visual-only mesh export, use the GLB folder or:
 
 ```powershell
-.venv\Scripts\python tools\start_viewer.py turbofan --format GLB --open
+.venv\Scripts\python tools\start_viewer.py ge_e3_turbofan --format GLB --open
 ```
 
 STEP supports component selection and topology measurements; GLB/STL provide

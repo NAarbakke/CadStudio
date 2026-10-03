@@ -124,11 +124,11 @@ def parts():
     ]
 
 
-@glb(out="../GLB/f1.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
-@stl(out="../STL/f1.stl")
-@step(out="../STEP/f1.step")
-def f1():
-    return assemble(parts(), "f1")
+@glb(out="../GLB/rocketdyne_f1.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
+@stl(out="../STL/rocketdyne_f1.stl")
+@step(out="../STEP/rocketdyne_f1.step")
+def rocketdyne_f1():
+    return assemble(parts(), "rocketdyne_f1")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """OKB-165 (Lyulka) direct-cycle nuclear turbojet with an offset reactor, from a period illustration.
 
-Source: resources/illustrations/direct_cooling_offset_reactor_nuclear_turbojet/ (side view, 290x105 px).
+Source: profile_builder/Nuclear_turbojet/ (side view, 290x105 px).
 Layout from the drawing: compressor and turbine/nozzle on one axis, joined by a long shaft tunnel;
 compressor air rises through an S-duct into a reactor vessel above the axis (the core is cooled
 directly by the engine air) and falls through a second S-duct to the turbine.
@@ -83,12 +83,12 @@ def parts():
     ]
 
 
-@glb(out="../GLB/nuclear_turbojet.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
-@stl(out="../STL/nuclear_turbojet.stl")
-@step(out="../STEP/nuclear_turbojet.step")
-def nuclear_turbojet():
-    return assemble(parts(), "nuclear_turbojet")
+@glb(out="../GLB/lyulka_nuclear_turbojet.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
+@stl(out="../STL/lyulka_nuclear_turbojet.stl")
+@step(out="../STEP/lyulka_nuclear_turbojet.step")
+def lyulka_nuclear_turbojet():
+    return assemble(parts(), "lyulka_nuclear_turbojet")
 
 
 if __name__ == "__main__":
-    nuclear_turbojet()
+    lyulka_nuclear_turbojet()

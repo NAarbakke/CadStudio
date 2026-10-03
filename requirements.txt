@@ -4,7 +4,7 @@ cadgen[snapshot]==0.7.10
 pywin32; sys_platform == "win32"
 # integrations/onshape/onshape_import.py
 requests
-# optional: standalone GLB rendering, PDF/figure tooling used for resources/
+# optional: standalone GLB rendering, PDF/figure tooling used for profile_builder/
 pyvista
 pymupdf
 pillow

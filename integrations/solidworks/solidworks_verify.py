@@ -1,6 +1,6 @@
 """Check native SolidWorks parts against the cadgen STEP export of the same model.
 
-    .venv\\Scripts\\python integrations\\solidworks\\solidworks_verify.py turbojet [--dir models/SolidWorks/turbojet] [--parts ...]
+    .venv\\Scripts\\python integrations\\solidworks\\solidworks_verify.py nasa_lewis_small_turbojet [--dir models/SolidWorks/nasa_lewis_small_turbojet] [--parts ...]
 
 Per part: rebuild errors, sketch status (all must be fully defined), and the geometry itself: the
 part is exported to STEP and compared with the cadgen part (volume, and volume of the overlap, so a

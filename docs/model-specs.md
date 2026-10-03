@@ -39,7 +39,7 @@ coordinate_system:
   geometry_length_unit: mm
 sources:
   naca_e51c16:
-    file: resources/NACA_RM_E51C16_16in_ramjet_1951.pdf
+    file: profile_builder/Ramjet/RM-E51C16_16in_ramjet_free_jet_1951.pdf
 dimensions:
   chamber_inside_diameter:
     value: 16.0

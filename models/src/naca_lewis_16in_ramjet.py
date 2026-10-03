@@ -1,6 +1,6 @@
 """NACA Lewis 16-inch ram jet (altitude wind tunnel free-jet engine, 1951), 9 parts.
 
-Sources (resources/NACA_RM_E51C16_16in_ramjet_1951.pdf, profile_builder/Ramjet/):
+Sources (profile_builder/Ramjet/RM-E51C16_16in_ramjet_free_jet_1951.pdf):
   - NACA RM E51C16 (Perchonok and Farley), Table I: shell inside diameters, diffuser inner-body and spike
     coordinates in inches; spike tip 4.27 in ahead of the lip at M 1.73 (2.63 at M 1.35). Figure 1: diffuser
     91 in, combustion chamber 81 in (Ø16), nozzle 9 in to Ø13.75, movable tail plug. Text: external cowl at 11°,

@@ -1,7 +1,7 @@
 """GE/NASA Energy Efficient Engine (E3) flight propulsion system: two-spool, long-duct mixed-flow turbofan.
 
-Sources (see resources/README.md):
-  - resources/E3_energy_efficient_engine_1981.pdf, Table I: fan Ø2108 mm, max nacelle Ø2489 mm,
+Sources (see profile_builder/Turbofan/README.md):
+  - profile_builder/Turbofan/E3_energy_efficient_engine_1981.pdf, Table I: fan Ø2108 mm, max nacelle Ø2489 mm,
     inlet length from fan face 1590 mm, nacelle length 6033 mm, exhaust nozzle Ø1590 mm,
     turbomachinery length 3180 mm, 162.4 kN takeoff thrust.
   - Same report, Figure 2 (cross-section): 32-blade fan with quarter-stage booster, 10-stage
@@ -133,11 +133,11 @@ def parts():
     ]
 
 
-@glb(out="../GLB/turbofan.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
-@stl(out="../STL/turbofan.stl")
-@step(out="../STEP/turbofan.step")
-def turbofan():
-    return assemble(parts(), "turbofan")
+@glb(out="../GLB/ge_e3_turbofan.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
+@stl(out="../STL/ge_e3_turbofan.stl")
+@step(out="../STEP/ge_e3_turbofan.step")
+def ge_e3_turbofan():
+    return assemble(parts(), "ge_e3_turbofan")
 
 
 if __name__ == "__main__":

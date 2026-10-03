@@ -65,7 +65,7 @@ specifications:
 sources:
   - id: E51C16
     title: NACA RM E51C16 - Internal flow and burning characteristics of a 16-inch ram jet in a free jet (Perchonok and Farley, 1951).
-    locator: "NTRS 19930086538. Table I and Figures 1-3. Local file: resources/NACA_RM_E51C16_16in_ramjet_1951.pdf."
+    locator: "NTRS 19930086538. Table I and Figures 1-3. Local file: profile_builder/Ramjet/RM-E51C16_16in_ramjet_free_jet_1951.pdf."
   - id: E52D08
     title: NACA RM E52D08 - Additional test information for the same 16-inch research engine.
     locator: Centre-body supports; reference notes in profile_builder/Ramjet/.

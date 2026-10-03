@@ -11,13 +11,13 @@ could be read over HTTP. Every GLB and STL could be downloaded and was non-empty
 
 | Saved STEP | Assembly parts |
 |---|---:|
-| `f1.step` | 12 |
+| `rocketdyne_f1.step` | 12 |
 | `naca_lewis_16in_ramjet.step` | 9 |
-| `nuclear_turbojet.step` | 13 |
+| `lyulka_nuclear_turbojet.step` | 13 |
 | `oreshnik.step` | 18 |
 | `tsirkon.step` | 17 |
-| `turbofan.step` | 12 |
-| `turbojet.step` | 14 |
+| `ge_e3_turbofan.step` | 12 |
+| `nasa_lewis_small_turbojet.step` | 14 |
 
 Each STEP was selected from the viewer's file panel and visually checked in
 Chrome after geometry finished loading. This confirms file switching and

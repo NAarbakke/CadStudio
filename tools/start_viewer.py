@@ -88,7 +88,7 @@ def check_step(url, relative, timeout):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("model", nargs="?", help="Source stem, e.g. turbofan")
+    parser.add_argument("model", nargs="?", help="Source stem, e.g. ge_e3_turbofan")
     parser.add_argument("--format", choices=("STEP", "GLB", "STL"), default="STEP")
     parser.add_argument("--open", action="store_true", help="Open the system browser")
     parser.add_argument("--check-all", action="store_true", help="Check all saved STEP/STL/GLB exports")
