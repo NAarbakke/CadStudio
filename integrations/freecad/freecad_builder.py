@@ -99,7 +99,8 @@ def op_spline(name, pts):
 def op_torus(name, x, r, tube_r):
     t = add("Part::Torus", name)
     t.Radius1, t.Radius2 = r, tube_r
-    t.Placement = App.Placement(V(x, 0, 0), App.Rotation(V(0, 1, 0), 90))
+    # seam turned 45° off the XY plane: on a Part::Revolution seam, MultiFuse silently leaves the torus unfused
+    t.Placement = App.Placement(V(x, 0, 0), App.Rotation(V(1, 0, 0), 45).multiply(App.Rotation(V(0, 1, 0), 90)))
     return t
 
 
@@ -157,10 +158,27 @@ def op_duct(name, stations, wall):
     return cut
 
 
-def op_fins(name, pts, thick, n):
+def op_fins(name, pts, thick, n, angle=0):
+    prof = polygon(f"{name}Profile", pts)
+    prof.Placement = about_x(angle)
     ext = add("Part::Extrusion", f"{name}Blade")
-    ext.Base, ext.Dir, ext.LengthFwd, ext.Symmetric, ext.Solid = polygon(f"{name}Profile", pts), V(0, 0, 1), thick, True, True
+    ext.Base, ext.Dir, ext.LengthFwd, ext.Symmetric, ext.Solid = prof, about_x(angle).Rotation.multVec(V(0, 0, 1)), thick, True, True
     return polar(ext, name, n)
+
+
+def op_pipe(name, pts, dia):
+    """Part::Cylinder per segment + Part::Sphere per elbow, fused (same primitives as cadgen)."""
+    objs = []
+    for i, (a, b) in enumerate(zip(pts, pts[1:])):
+        a, b = V(*a), V(*b)
+        cyl = add("Part::Cylinder", f"{name}Segment{i}")
+        cyl.Radius, cyl.Height, cyl.Placement = dia / 2, (b - a).Length, App.Placement(a, App.Rotation(V(0, 0, 1), b - a))
+        objs.append(cyl)
+    for i, p in enumerate(pts[1:-1]):
+        sph = add("Part::Sphere", f"{name}Elbow{i}")
+        sph.Radius, sph.Placement = dia / 2, App.Placement(V(*p), App.Rotation())
+        objs.append(sph)
+    return fuse(objs, name)
 
 
 def fuse(objs, name):

@@ -6,8 +6,13 @@ Sources (see resources/README.md):
     turbomachinery length 3180 mm, 162.4 kN takeoff thrust.
   - Same report, Figure 2 (cross-section): 32-blade fan with quarter-stage booster, 10-stage
     23:1 HPC, double-annular combustor, 2-stage HPT, 5-stage LPT, lobed mixer, centre plug.
+  - E3 component design reports (profile_builder/Turbofan/): fan CR-165148 (part-span shrouds at 50 %
+    span, 64 swept and leaned bypass OGVs, 56-blade quarter-stage rotor, chord 63.5-71.1 mm), HPC
+    CR-165558 (airfoil counts per row; stators 2 and 5 read from a poor scan), HPT CR-167955 (46/76 and
+    48/70 vanes/blades), LPT CR-167956 Figure 6 (nozzle/rotor counts per stage), FPS CR-168219 (mixer:
+    18 scalloped lobes with radial sidewalls).
 Stations and radii are digitized from Figure 2 (scale from the fan diameter, ~±15 mm).
-Blade counts beyond the fan, airfoil shapes and internal structure are assumptions.
+Airfoil shapes (flat plates), the mixer lobes (radial sidewalls only) and internal structure are simplified.
 Axis = +X, x = 0 at the fan leading edge (fan face). Units mm.
 """
 from math import cos, radians
@@ -31,21 +36,23 @@ BYPASS_COWL = [(240, 690), (500, 700), (800, 655), (1200, 630), (2000, 620), (26
 
 
 def rows(prefix, xs, last_pitch, r_stagger, s_stagger, r_n, s_n, thick=3):
-    """Rotor at each x, stator half a pitch behind it; chords scale with the local pitch."""
+    """Rotor at each x, stator half a pitch behind it; chords scale with the local pitch. r_n/s_n: counts per row."""
     out = []
     for i, (x, nxt) in enumerate(zip(xs, xs[1:] + [xs[-1] + last_pitch]), 1):
         p = nxt - x
-        out += [(f"{prefix}{i}Rotor", "R", x, 0.4 * p / cos(radians(r_stagger)), thick, r_n, r_stagger),
-                (f"{prefix}{i}Stator", "S", x + p / 2, 0.4 * p / cos(radians(s_stagger)), thick, s_n, s_stagger)]
+        out += [(f"{prefix}{i}Rotor", "R", x, 0.4 * p / cos(radians(r_stagger)), thick, r_n[i - 1], r_stagger),
+                (f"{prefix}{i}Stator", "S", x + p / 2, 0.4 * p / cos(radians(s_stagger)), thick, s_n[i - 1], s_stagger)]
     return out
 
 
 # (name, kind, x, chord, thickness, count, stagger°)
-HPC = rows("HPC", [1190, 1303, 1412, 1494, 1566, 1644, 1698, 1771, 1825, 1880], 55, 45, -40, 32, 40)
-HPT = [("HPT1Nozzle", "S", 2220, 40, 8, 36, -50), ("HPT1Rotor", "R", 2280, 42, 6, 50, 55),
-       ("HPT2Nozzle", "S", 2340, 40, 8, 36, -50), ("HPT2Rotor", "R", 2400, 42, 6, 50, 55)]
-LPT = [st for i, x in enumerate((2592, 2688, 2792, 2901, 3015), 1)
-       for st in ((f"LPT{i}Nozzle", "S", x - 47, 45, 6, 50, -50), (f"LPT{i}Rotor", "R", x, 48, 6, 60, 55))]
+HPC = rows("HPC", [1190, 1303, 1412, 1494, 1566, 1644, 1698, 1771, 1825, 1880], 55, 45, -40,
+           [28, 48, 50, 60, 70, 80, 82, 84, 88, 96], [50, 68, 82, 93, 92, 120, 112, 104, 118, 140])  # CR-165558
+HPT = [("HPT1Nozzle", "S", 2220, 40, 8, 46, -50), ("HPT1Rotor", "R", 2280, 42, 6, 76, 55),  # CR-167955
+       ("HPT2Nozzle", "S", 2340, 40, 8, 48, -50), ("HPT2Rotor", "R", 2400, 42, 6, 70, 55)]
+LPT = [st for i, (x, nn, nr) in enumerate(zip((2592, 2688, 2792, 2901, 3015), (72, 102, 96, 114, 120),
+                                              (120, 122, 122, 156, 110)), 1)  # CR-167956 Figure 6
+       for st in ((f"LPT{i}Nozzle", "S", x - 47, 45, 6, nn, -50), (f"LPT{i}Rotor", "R", x, 48, 6, nr, 55))]
 
 
 def row_ops(stages, kind, bore=0):
@@ -65,23 +72,25 @@ def fan():
     root, tip = (300, 190, 30, 25), (tip_radius(FAN_TIP_R, 330, 0, 58), 330, 8, 58)  # (r, chord, thick, twist°)
     sections = [tuple(p + (q - p) * i / 7 for p, q in zip(root, tip)) for i in range(8)]  # ~5° of twist per step
     return [("revolve", "FanHub", [(0, 0), (0, 330), (186, 318), (186, 0)]),
-            ("loft", "FanBlades", 93, sections, FAN_BLADES)]
+            ("loft", "FanBlades", 93, sections, FAN_BLADES),
+            ("revolve", "PartSpanShroud", [(78, 670), (108, 670), (108, 680), (78, 680)])]  # clappers at 50 % span
 
 
 def lp_spool():
     """Fan-driven spool: shaft, booster drum with the quarter-stage blades, 5 LPT rotors."""
-    booster_tip = tip_radius(interp(GAS_OUTER, 425) - GAP, 60, 4, 40)
+    booster_tip = tip_radius(interp(GAS_OUTER, 425) - GAP, 67, 4, 40)
     return [("revolve", "LPShaft", tube_profile(186, 3075, 0, LP_SHAFT_R)),
             ("revolve", "BoosterDrum", [(186, LP_SHAFT_R), (186, 318), (470, 436), (470, LP_SHAFT_R)]),
-            ("ring", "BoosterRotor", 400, interp(GAS_HUB, 400) - 10, booster_tip, 60, 4, 40, 40),  # quarter stage
+            ("ring", "BoosterRotor", 400, interp(GAS_HUB, 400) - 10, booster_tip, 67, 4, 56, 40),  # quarter stage, 56 blades
             *row_ops(LPT, "R", LP_SHAFT_R)]
 
 
 def core_casing():
-    """Splitter, core cowl and casing to the mixer exit, with 40 bypass OGVs (integrated vane-frame)."""
+    """Splitter, core cowl and casing to the mixer exit, 64 bypass OGVs (integrated vane-frame), 18 mixer lobes."""
     ogv_x, chord, thick, stagger = 760, 140, 8, 20
     return [("revolve", "CoreCasing", BYPASS_COWL + GAS_OUTER[:0:-1] + [(240, 685)]),
-            ("ring", "BypassOGVs", ogv_x, 640, tip_radius(FAN_CASE_R, chord, thick, stagger), chord, thick, 40, stagger)]
+            ("ring", "BypassOGVs", ogv_x, 640, tip_radius(FAN_CASE_R, chord, thick, stagger), chord, thick, 64, stagger),
+            ("fins", "MixerLobes", [(3250, 565), (3537, 380), (3537, 560)], 8, 18)]  # lobe sidewalls, crests not modelled
 
 
 def combustor():

@@ -1,0 +1,126 @@
+schema_version: 1
+title: NACA Lewis 16-inch ramjet
+subtitle: 1951 free-jet research engine / NACA RM E51C16
+document_id: CS-NACA-16-RJ
+revision: A
+status: Sourced study reconstruction. Drawing dimensions describe the CAD model.
+summary: >-
+  A nine-component reconstruction of the Lewis altitude-wind-tunnel ramjet.
+  The inlet spike, diffuser, pilot centre body, fuel bars, flame holder,
+  water-cooled chamber, nozzle and movable tail plug follow published
+  coordinates and figures, with documented simplifications.
+model:
+  source: models/src/naca_lewis_16in_ramjet.py
+  step: models/STEP/naca_lewis_16in_ramjet.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    camera: "210:20"
+    display: render
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the flow axis shows the inlet spike, centre body,
+      injector region, combustion chamber and aft plug. Flow follows +X.
+  - id: internal_assembly
+    title: Internal assembly / shell components hidden
+    camera: "210:20"
+    display: render
+    hide: [inlet_diffuser, injector_section, combustion_chamber, exhaust_nozzle]
+    caption: >-
+      Four outer components are hidden to expose the spike, pilot centre body,
+      fuel injector, flame holder and tail-plug support structure.
+specifications:
+  - label: Chamber inside diameter
+    value: 406.4 mm / 16 in
+    basis: Reported; Figure 1
+    source: E51C16
+  - label: Injector station from inlet lip
+    value: {parameter: X_INJ, unit: in}
+    unit: mm
+    basis: Reported; Figure 2
+    source: E51C16
+  - label: Nozzle exit station from inlet lip
+    value: {parameter: X_EXIT, unit: in}
+    unit: mm
+    basis: Reported; Figure 1
+    source: E51C16
+  - label: Nozzle exit inside diameter
+    value: 349.25 mm / 13.75 in
+    basis: Reported; Figure 1
+    source: E51C16
+  - label: Shell wall thickness
+    value: {parameter: WALL, unit: in}
+    unit: mm
+    basis: Modelling assumption
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: E51C16
+    title: NACA RM E51C16 - Internal flow and burning characteristics of a 16-inch ram jet in a free jet (Perchonok and Farley, 1951).
+    locator: "NTRS 19930086538. Table I and Figures 1-3. Local file: resources/NACA_RM_E51C16_16in_ramjet_1951.pdf."
+  - id: E52D08
+    title: NACA RM E52D08 - Additional test information for the same 16-inch research engine.
+    locator: Centre-body supports; reference notes in profile_builder/Ramjet/.
+assumptions:
+  - "Wall thickness (3/16 in), flange diameter (19 in), and some strut dimensions are assumed."
+  - "Some flange and plug details were read from Figure 1 with approximately +/-0.5 in uncertainty."
+  - "Straight gutters at 40 degrees approximate the reported corrugated flame holder."
+  - "Cooling turns are separate toroidal rings fused to the chamber, rather than a continuous helix."
+  - "Instrumentation, external fluid lines and tunnel mounts are omitted."
+  - "No physical material or density has been inferred from display colours."
+drawings:
+  - title: NACA 16-IN RAMJET / GENERAL ARRANGEMENT
+    size: A3
+    scale: 0.0625
+    notes:
+      - "DIMENSIONS IN mm. STUDY RECONSTRUCTION."
+      - "FLOW AXIS +X. INLET LIP AT X=0."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall
+      top:
+        - type: linear
+          p1: [0, 0, 0]
+          p2: [{parameter: X_EXIT, unit: in}, 0, 0]
+          orientation: h
+          offset: 30
+      right:
+        - type: note
+          text: EXIT / +X
+          at: [{parameter: X_EXIT, unit: in}, 0, 0]
+          offset: [-25, 30]
+  - title: INLET AND PILOT CENTRE BODY / DETAIL
+    size: A3
+    scale: 0.1
+    parts: [inlet_diffuser, spike, centre_body]
+    notes:
+      - "DIMENSIONS IN mm. STATIONS REFER TO INLET LIP."
+      - "HIDDEN LINES SHOW INTERNAL PROFILES."
+      - "STRUT GEOMETRY INCLUDES MODELLING ASSUMPTIONS."
+    views:
+      - {name: front, at: [185, 190], hidden: true, label: SIDE ELEVATION}
+      - {name: top, at: [185, 100], hidden: false, label: PLAN VIEW}
+      - {name: right, at: [350, 190], hidden: true, label: AFT VIEW}
+    dimensions:
+      front:
+        - type: overall
+        - type: linear
+          p1: [0, 0, 0]
+          p2: [1651, 0, 0]
+          orientation: h
+          offset: -38
+      top:
+        - type: linear
+          p1: [{parameter: SPIKE_TIP, unit: in}, 0, 0]
+          p2: [0, 0, 0]
+          orientation: h
+          offset: -22

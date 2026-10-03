@@ -343,8 +343,10 @@ class PartBuilder:
     def cut(self, name, points):
         return self.revolve(name, points, cut=True)
 
-    def fins(self, name, points, thick, n):
+    def fins(self, name, points, thick, n, angle=0):
         """n flat fins: (x, r) planform on the Front Plane ("<name>Profile", vertices x<i>/r<i>), mid-plane extrude, pattern."""
+        if angle:  # ponytail: needs a sketch on a plane through the axis at `angle`; import the STEP instead
+            raise NotImplementedError(f"{name}: fins at an angle have no native SolidWorks feature yet")
         self.axis()
         before = {b.Name for b in self._bodies()}
         self._sketch(self.planes[0])
@@ -353,6 +355,10 @@ class PartBuilder:
         self._dimension_points(vertices, pts)
         self._close_sketch(f"{name}Profile")
         self._pattern(self._extrude(f"{name}Blade", thick, midplane=True), name, n, before)
+
+    def pipe(self, name, points, dia):
+        # ponytail: no native sweep yet (needs a 3D-sketch path); import the STEP with solidworks_import.py instead
+        raise NotImplementedError(f"{name}: the pipe op has no native SolidWorks feature yet")
 
     def offset_ring(self, name, points, axis_y, n):
         """offset_revolve seed "<name>Seed" patterned n times about the engine axis."""

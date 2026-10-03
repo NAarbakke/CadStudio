@@ -15,7 +15,9 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("loft", name, x, sections, n)                          n blades lofted through elliptical sections [(r, chord, thick, twist°)]
     ("duct", name, stations, wall)                          hollow duct through circles [(x, y_centre, r_outer)], wall thickness
     ("offset_ring", name, points, axis_y, n)                n copies of an offset_revolve around X (e.g. a ring of cones)
-    ("fins", name, points, thick, n)                        n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
+    ("fins", name, points, thick, n, angle=0)               n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
+    ("pipe", name, points, dia)                             solid round pipe along a 3D polyline [(x, y, z)], spherical elbows
+                                                            (cadgen and FreeCAD only; the SolidWorks builder raises)
 
 `name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
 """
@@ -126,7 +128,7 @@ def duct(stations, wall):
     return loft(0) - loft(wall)
 
 
-def fins(points, thick, n):
+def fins(points, thick, n, angle=0):
     """n flat fins: (x, r) planform in the XY plane, extruded symmetrically to `thick` in Z."""
     with bd.BuildPart() as fin:
         with bd.BuildSketch(bd.Plane.XY):
@@ -134,7 +136,14 @@ def fins(points, thick, n):
                 bd.Polyline(*points, close=True)
             bd.make_face()
         bd.extrude(amount=thick / 2, both=True)
-    return _around(fin.part, n)
+    return _around(fin.part, n, angle)
+
+
+def pipe(points, dia):
+    """Cylinders between consecutive (x, y, z) points plus a sphere at each inner point (the elbows)."""
+    segs = [(bd.Vector(a), bd.Vector(b)) for a, b in zip(points, points[1:])]
+    return ([bd.Solid.make_cylinder(dia / 2, (b - a).length, bd.Plane(origin=a, z_dir=b - a)) for a, b in segs]
+            + [bd.Pos(*p) * bd.Solid.make_sphere(dia / 2) for p in points[1:-1]])
 
 
 def tube_profile(x0, x1, r_in, r_out):
@@ -147,7 +156,7 @@ def tube(x0, x1, r_in, r_out):
 
 
 OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "offset_ring": offset_ring, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
-       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring}
+       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring, "pipe": pipe}
 
 
 def build(ops):

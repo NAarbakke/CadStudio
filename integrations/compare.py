@@ -40,7 +40,8 @@ def common_volume(a, b, fuzz=1e-3):
 def sampled_iou(a, b, n=600, seed=1):
     """Overlap estimated by classifying random points in b's bounding box as inside a and/or b.
 
-    Fallback for when the fuzzy boolean returns nothing (cone tips, many nearly coincident faces).
+    Fallback for when the fuzzy boolean fails: it returns nothing (cone tips) or a partial overlap
+    (many nearly coincident faces, torus seams placed differently by the two kernels).
     """
     rnd, box = random.Random(seed), b.bounding_box()
     def inside(shape, p):
@@ -60,9 +61,9 @@ def compare(native, cad, lofted):
     v_common = common_volume(native, cad)
     tolerance = LOFT_TOLERANCE if lofted else TOLERANCE
     note = f"overlap {v_common / v_cad:7.2%}"
-    if v_common < 0.01 * v_cad:  # the boolean gave up: check the geometry by point sampling instead
+    if abs(v_common - v_cad) / v_cad >= tolerance:  # boolean failed or found a real difference: sample points
         iou = sampled_iou(native, cad)
-        note = f"overlap {iou:7.2%} (sampled, boolean failed)"
+        note = f"overlap {iou:7.2%} (sampled; boolean said {v_common / v_cad:.2%})"
         v_common = v_cad if iou >= (0.99 if lofted else 0.998) else v_cad * iou
     good = max(abs(v_native - v_cad), abs(v_common - v_cad)) / v_cad < tolerance
     return good, v_native, v_cad, note
