@@ -1,0 +1,255 @@
+% Template for reports/latex/naca_lewis_16in_ramjet.py, filled by tools/latex_report.py.
+% Every number below comes from the script, not from this file.
+\documentclass{cadstudio}
+\title{\VAR{title}}
+\subtitle{\VAR{subtitle}}
+\documentid{\VAR{document_id}}
+\revision{\VAR{revision}}
+\date{\VAR{date}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  The duct coordinates tabulated in the CAD model of the engine of reference~\cite{E51C16} are
+  reduced to a flow-area distribution, and one-dimensional gas dynamics is applied at the two
+  free-jet Mach numbers of that report and over the travel of the exit plug. The conical shock of
+  the \VAR{"%.0f"|format(cone)}\unit{\degree} spike is found to lie within
+  \VAR{"%.1f"|format(lip_gap)}\unit{\degree} of the line from the spike tip to the cowl lip at both
+  Mach numbers, the ideal total-pressure recovery at $M_\infty = \VAR{"%.2f"|format(design.mach)}$ is
+  \VAR{"%.3f"|format(design.spike)}, and a choked exit sets the chamber Mach number between
+  \VAR{"%.2f"|format(plug[0].mach)} and \VAR{"%.2f"|format(plug[-1].mach)}. The results are ideal
+  estimates derived from the model geometry; they are not test data.
+\end{abstract}
+
+\begin{nomenclature}
+  \item[$A$] flow area
+  \item[$A^*$] flow area at sonic conditions
+  \item[$M$] Mach number
+  \item[$p_0$, $T_0$] total pressure and temperature
+  \item[$r_s$, $r_b$] shell and inner-body radii
+  \item[$V_r$] radial velocity in conical flow, divided by the maximum speed
+  \item[$x$] station from the inlet lip
+  \item[$\beta$] shock angle
+  \item[$\gamma$] ratio of specific heats
+  \item[$\eta$] total-pressure recovery
+  \item[$\theta$] polar angle from the cone axis
+  \item[$c$, $e$] subscripts: combustion chamber, nozzle exit
+  \item[$n$] subscript: component normal to the shock
+  \item[$1$, $2$] subscripts: upstream, downstream of a shock
+  \item[$\infty$] subscript: free stream
+\end{nomenclature}
+
+\section{Introduction}
+
+\BLOCK{if render}
+The CAD model (figure~\ref{fig:cad}) reconstructs the 16-inch ramjet tested in a free jet at the
+NACA Lewis laboratory~\cite{E51C16,E52D08}.
+\BLOCK{else}
+The CAD model reconstructs the 16-inch ramjet tested in a free jet at the NACA Lewis
+laboratory~\cite{E51C16,E52D08}.
+\BLOCK{endif}
+Its shell, centre-body and spike profiles are the tabulated coordinates of
+reference~\cite{E51C16}. This note checks those coordinates against elementary gas dynamics: the
+area distribution of the duct, the position of the spike shock relative to the cowl lip, and the
+chamber Mach number implied by the exit plug.
+
+\BLOCK{if render}
+\begin{figure}[!htb]
+  \includegraphics[width=0.9\textwidth]{\VAR{render}}
+  \caption{Exterior of the CAD assembly. Flow runs from the spike, lower right, to the nozzle.}
+  \label{fig:cad}
+\end{figure}
+\BLOCK{endif}
+
+\section{Flow path}
+
+Stations $x$ are measured from the inlet lip along the flow axis. The shell and inner-body radii
+$r_s(x)$ and $r_b(x)$ are linear interpolations of the model tables, with the spike at its
+$M_\infty = \VAR{"%.2f"|format(design.mach)}$ position, and the annular flow area is
+\begin{equation}
+  A(x) = \pi\left[r_s(x)^2 - r_b(x)^2\right]. \label{eq:area}
+\end{equation}
+Figure~\ref{fig:duct} shows the result and table~\ref{tab:stations} lists it at the main stations.
+The cowl lip encloses a capture area of \qty{\VAR{"%.0f"|format(capture_cm2)}}{\centi\metre\squared}
+and the chamber area is \qty{\VAR{"%.0f"|format(chamber_cm2)}}{\centi\metre\squared}. The annulus
+grows by a factor of \VAR{"%.2f"|format(diffuser_ratio)} between the lip and the station where the
+shell reaches the chamber diameter. With the plug clear, the nozzle exit is
+\VAR{"%.0f"|format(exit_fraction * 100)}\,\% of the chamber area, which coincides with the upper end
+of the plug range given in reference~\cite{E51C16}.
+
+\begin{figure}[!htb]
+  \includegraphics{duct.pdf}
+  \caption{Shell and inner-body radii from the model tables, and the flow area of
+    equation~\eqref{eq:area}. The tail plug and the flame-holder blockage are not included.}
+  \label{fig:duct}
+\end{figure}
+
+\begin{table}[!htb]
+  \caption{Flow area at the main stations}
+  \label{tab:stations}
+  \begin{tabular}{@{}l S[table-format=4.1] S[table-format=3.1] S[table-format=3.1]
+      S[table-format=4.0] S[table-format=1.3]@{}}
+    \toprule
+    Station & {$x$, mm} & {$r_s$, mm} & {$r_b$, mm} & {$A$, \unit{cm^2}} & {$A/A_c$} \\
+    \midrule
+\BLOCK{for row in stations}
+    \VAR{row.label} & \VAR{"%.1f"|format(row.x_mm)} & \VAR{"%.1f"|format(row.shell_mm)}
+      & \VAR{"%.1f"|format(row.body_mm)} & \VAR{"%.0f"|format(row.area_cm2)} & \VAR{"%.3f"|format(row.ratio)} \\
+\BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+  \tablenote{The centre body is hollow; pilot flow inside it is not counted.}
+\end{table}
+
+\section{Inlet shock system}
+
+For a perfect gas with $\gamma = \VAR{gamma_air}$ the free-stream total conditions
+are~\cite{AMES1135}
+\begin{equation}
+  \frac{T_0}{T_\infty} = 1 + \frac{\gamma - 1}{2} M_\infty^2, \qquad
+  \frac{p_0}{p_\infty} = \left(\frac{T_0}{T_\infty}\right)^{\gamma/(\gamma - 1)}. \label{eq:total}
+\end{equation}
+A shock with upstream normal Mach number $M_n$ keeps the fraction
+\begin{equation}
+  \frac{p_{02}}{p_{01}} =
+  \left[\frac{(\gamma + 1) M_n^2}{(\gamma - 1) M_n^2 + 2}\right]^{\gamma/(\gamma - 1)}
+  \left[\frac{\gamma + 1}{2 \gamma M_n^2 - (\gamma - 1)}\right]^{1/(\gamma - 1)} \label{eq:shock}
+\end{equation}
+of the total pressure, with $M_n = M_\infty \sin\beta$ for a shock inclined at $\beta$ to the flow.
+The spike is a cone of \VAR{"%.0f"|format(cone)}\unit{\degree} half-angle. Its shock angle follows
+from the Taylor--Maccoll equation~\cite{TM1933} for the radial velocity $V_r(\theta)$ of the conical
+flow, with $V_r' = \mathrm{d}V_r/\mathrm{d}\theta$:
+\begin{equation}
+  \frac{\gamma - 1}{2}\left[1 - V_r^2 - V_r'^2\right]\left[2 V_r + V_r' \cot\theta + V_r''\right]
+  - V_r' \left[V_r V_r' + V_r' V_r''\right] = 0. \label{eq:tm}
+\end{equation}
+Equation~\eqref{eq:tm} is integrated from the shock to the ray where $V_r' = 0$, and $\beta$ is
+iterated until that ray is the cone surface. The inlet recovery is then estimated as the conical
+shock followed by a normal shock at the Mach number $M_2$ just behind it,
+\begin{equation}
+  \eta = \left.\frac{p_{02}}{p_{01}}\right|_{M_n = M_\infty \sin\beta} \times
+         \left.\frac{p_{02}}{p_{01}}\right|_{M_n = M_2}. \label{eq:recovery}
+\end{equation}
+
+Table~\ref{tab:inlet} gives the results. The computed shock angles lie within
+\VAR{"%.1f"|format(lip_gap)}\unit{\degree} of the line from the spike tip to the cowl lip at both
+Mach numbers, so the two tip projections of reference~\cite{E51C16} place the conical shock close
+to the lip in each case.
+
+\begin{table}[!htb]
+  \caption{Ideal inlet conditions at the two free-jet Mach numbers}
+  \label{tab:inlet}
+  \begin{tabular}{@{}l l \BLOCK{for c in conditions}S[table-format=3.3] \BLOCK{endfor}@{}}
+    \toprule
+    & & \multicolumn{\VAR{conditions|length}}{c}{$M_\infty$} \\
+    \cmidrule(l){3-\VAR{conditions|length + 2}}
+    Quantity & Basis
+\BLOCK{for c in conditions}
+      & {\VAR{"%.2f"|format(c.mach)}}
+\BLOCK{endfor}
+    \\
+    \midrule
+    Total temperature ratio, $T_0/T_\infty$ & Eq.~\eqref{eq:total}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.t_ratio)} \BLOCK{endfor}\\
+    Total pressure ratio, $p_0/p_\infty$ & Eq.~\eqref{eq:total}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.p_ratio)} \BLOCK{endfor}\\
+    Spike-tip projection, mm & Ref.~\cite{E51C16}
+      \BLOCK{for c in conditions}& \VAR{"%.1f"|format(c.projection_mm)} \BLOCK{endfor}\\
+    Tip-to-lip line angle, deg & Geometry
+      \BLOCK{for c in conditions}& \VAR{"%.1f"|format(c.lip)} \BLOCK{endfor}\\
+    Conical shock angle, $\beta$, deg & Eq.~\eqref{eq:tm}
+      \BLOCK{for c in conditions}& \VAR{"%.1f"|format(c.shock)} \BLOCK{endfor}\\
+    Mach number behind the shock, $M_2$ & Eq.~\eqref{eq:tm}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.mach_2)} \BLOCK{endfor}\\
+    Mach number on the cone surface & Eq.~\eqref{eq:tm}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.surface_mach)} \BLOCK{endfor}\\
+    Recovery, normal shock alone & Eq.~\eqref{eq:shock}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.normal)} \BLOCK{endfor}\\
+    Recovery, spike inlet, $\eta$ & Eq.~\eqref{eq:recovery}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.spike)} \BLOCK{endfor}\\
+    Recovery, MIL-E-5008B & Eq.~\eqref{eq:mil}
+      \BLOCK{for c in conditions}& \VAR{"%.3f"|format(c.mil)} \BLOCK{endfor}\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Figure~\ref{fig:recovery} compares equation~\eqref{eq:recovery} with a single normal shock and with
+the reference recovery of specification MIL-E-5008B,
+\begin{equation}
+  \eta_{\mathrm{MIL}} = 1 - 0.075 \left(M_\infty - 1\right)^{1.35}, \qquad 1 < M_\infty < 5. \label{eq:mil}
+\end{equation}
+The spike curve starts where the conical shock attaches. Viscous and subsonic-diffuser losses are
+not included, so the curves are upper bounds for each shock arrangement.
+
+\begin{figure}[!htb]
+  \includegraphics{recovery.pdf}
+  \caption{Ideal total-pressure recovery against free-stream Mach number. The symbols are the two
+    free-jet conditions of table~\ref{tab:inlet}.}
+  \label{fig:recovery}
+\end{figure}
+
+\section{Exit plug and chamber Mach number}
+
+The movable tail plug sets the exit area $A_e$ between
+\VAR{"%.0f"|format(plug_area[0] * 100)} and \VAR{"%.0f"|format(plug_area[1] * 100)}\,\% of the chamber
+area~\cite{E51C16}. If the exit is choked and the flow from the chamber to the exit is isentropic,
+the chamber Mach number $M_c$ is the subsonic root of the area--Mach relation~\cite{AMES1135} with
+$A^* = A_e$:
+\begin{equation}
+  \frac{A_c}{A^*} = \frac{1}{M_c}
+  \left[\frac{2}{\gamma + 1}\left(1 + \frac{\gamma - 1}{2} M_c^2\right)\right]^{(\gamma + 1)/[2(\gamma - 1)]}.
+  \label{eq:areamach}
+\end{equation}
+Table~\ref{tab:plug} and figure~\ref{fig:plug} give $M_c$ at the end of the chamber, after heat
+release, for an assumed $\gamma = \VAR{gamma_hot}$ in the combustion products and for cold air.
+The two values of $\gamma$ change $M_c$ by at most \VAR{"%.3f"|format(gamma_gap)} over the plug
+travel.
+
+\begin{table}[!htb]
+  \caption{Chamber Mach number for a choked exit}
+  \label{tab:plug}
+  \begin{tabular}{@{}S[table-format=1.2] S[table-format=1.3] S[table-format=1.3] S[table-format=1.3]@{}}
+    \toprule
+    & & \multicolumn{2}{c}{$M_c$} \\
+    \cmidrule(l){3-4}
+    {$A_e/A_c$} & {$A_c/A^*$} & {$\gamma = \VAR{gamma_hot}$} & {$\gamma = \VAR{gamma_air}$} \\
+    \midrule
+\BLOCK{for row in plug}
+    \VAR{"%.2f"|format(row.fraction)} & \VAR{"%.3f"|format(row.ratio)} & \VAR{"%.3f"|format(row.mach)}
+      & \VAR{"%.3f"|format(row.mach_air)} \\
+\BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[!htb]
+  \includegraphics{plug.pdf}
+  \caption{Chamber Mach number from equation~\eqref{eq:areamach} against exit-area fraction. The
+    shaded band is the plug travel and the symbols are the rows of table~\ref{tab:plug}.}
+  \label{fig:plug}
+\end{figure}
+
+\section{Assumptions}
+
+\begin{enumerate}
+  \item Air is a perfect gas with $\gamma = \VAR{gamma_air}$; $\gamma = \VAR{gamma_hot}$ for the
+    combustion products is an assumed mean value.
+  \item The flow is steady, inviscid and one-dimensional apart from the conical shock.
+  \item Radii between tabulated stations are interpolated linearly, as in the CAD model.
+  \item The flame holder, fuel bars, struts and tail plug are left out of the area distribution.
+  \item The terminal normal shock is taken at $M_2$; the lower Mach number on the cone surface
+    would give a slightly higher recovery.
+\end{enumerate}
+
+{\raggedright\noindent Geometry was read from \texttt{\VAR{source_path}}, SHA-256 digest
+\texttt{\VAR{source_hash}}\dots\par}
+
+\begin{thebibliography}{9}\raggedright
+\BLOCK{for reference in references}
+  \bibitem{\VAR{reference.id}} \VAR{reference.title}\BLOCK{if reference.locator} \VAR{reference.locator}\BLOCK{endif}
+
+\BLOCK{endfor}
+\end{thebibliography}
+
+\end{document}

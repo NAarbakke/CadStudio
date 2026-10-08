@@ -3,11 +3,12 @@
 `tools/engineering_report.py` combines CAD renders, specification tables,
 component measurements, material/mass entries, sources and vector engineering
 drawings in one PDF. Its report definition is a YAML file under `reports/`.
-The NACA Lewis 16-inch ramjet is the first working example.
+The NACA Lewis 16-inch ramjet is the first working example. For analysis
+documents with equations and plots, see [LaTeX reports](latex-reports.md).
 
 ## Generate
 
-From the CadStudio root:
+From the CadStudio root. Windows (PowerShell):
 
 ```powershell
 .venv\Scripts\python -m pip install -r requirements.txt
@@ -15,6 +16,16 @@ From the CadStudio root:
 .venv\Scripts\python models\src\naca_lewis_16in_ramjet.py
 .venv\Scripts\python tools\engineering_report.py reports\naca_lewis_16in_ramjet.yaml
 ```
+
+Ubuntu (the engine install is blocked on Linux for now; see [Ubuntu setup](ubuntu.md)):
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python models/src/naca_lewis_16in_ramjet.py
+.venv/bin/python tools/engineering_report.py reports/naca_lewis_16in_ramjet.yaml
+```
+
+`patch_cadgen_windows.py` is only needed on Windows.
 
 The generator can regenerate the model first with `--build`. By default it
 reports the saved STEP revision. `--reuse-renders` reuses image files only when
@@ -100,7 +111,11 @@ material evidence in the report's source and assumption notes.
 ## Verify
 
 ```powershell
-.venv\Scripts\python -m unittest discover -s tests
+.venv\Scripts\python -m unittest discover -s tests   # Windows
+```
+
+```bash
+.venv/bin/python -m unittest discover -s tests       # Ubuntu
 ```
 
 The generator rejects invalid geometry, unknown components/materials, invalid

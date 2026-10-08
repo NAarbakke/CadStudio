@@ -11,3 +11,8 @@ pillow
 # Engineering PDF reports and declarative report manifests
 reportlab==4.4.10
 PyYAML==6.0.3
+# Optional LaTeX reports (tools/latex_report.py, reports/latex/); compiling also needs
+# latexmk and LuaLaTeX from TeX Live or MiKTeX, which pip cannot install
+Jinja2==3.1.6
+matplotlib
+scipy

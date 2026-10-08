@@ -6,6 +6,10 @@ be running (the 3DEXPERIENCE edition cannot be started over COM). The API works 
 radians; the helpers here take mm and degrees.
 """
 import math
+import sys
+
+if sys.platform != "win32":
+    raise SystemExit("The SolidWorks scripts need Windows with SOLIDWORKS installed (this is " + sys.platform + ").")
 
 import pythoncom
 import win32com.client

@@ -23,6 +23,10 @@ are written in inches, as their sources are, and scaled once); the engine axis i
 
 Requires Python 3.11+ (tested on 3.13, Windows 11).
 
+Commands are shown in Windows PowerShell. On Ubuntu, use `.venv/bin/python` in place of
+`.venv\Scripts\python` and forward slashes in paths, and run `./open_cad_viewer.sh` in place
+of `Open CAD Viewer.cmd`. See [Ubuntu setup](docs/ubuntu.md) for what does and does not work there.
+
 The engine and bundled CAD Viewer are pinned to text-to-cad/cadgen 0.7.10.
 Model dimensions and geometry recipes currently live in Python; see
 [model specification format](docs/model-specs.md) for the proposed YAML data
@@ -37,6 +41,13 @@ notes and dimensioned vector drawings. See [engineering reports](docs/engineerin
 
 The PDF is written to `output/pdf/naca_lewis_16in_ramjet_engineering_report.pdf`.
 
+Reports with equations, plots and numbered tables can be typeset with LaTeX instead
+(optional; needs TeX Live or MiKTeX). See [LaTeX reports](docs/latex-reports.md).
+
+```powershell
+.venv\Scripts\python reports\latex\naca_lewis_16in_ramjet.py
+```
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
@@ -45,12 +56,7 @@ python -m venv .venv
 .venv\Scripts\python -m cadgen.cli doctor <path-to-installed-cad-skill>   # checks cadgen + OpenCascade kernel
 ```
 
-For Claude Code, the text-to-cad plugin provides CAD modeling and viewer integration:
-
-```powershell
-claude plugin marketplace add earthtojake/text-to-cad
-claude plugin install text-to-cad@earthtojake
-```
+On Ubuntu, see [Ubuntu setup](docs/ubuntu.md). The pinned engine does not install on Linux yet.
 
 ## Build
 
@@ -106,7 +112,7 @@ corners never cut into the casing.
 - **Snapshot to PNG**: `cd models; ..\.venv\Scripts\python -m cadgen.cli step snapshot STEP/nasa_lewis_small_turbojet.step ../tmp/view.png [--mode section] [--camera 200:15]`
 
 See [local installation and update notes](docs/local-installation.md) for the
-engine, viewer and plugin locations. For a full export-access check:
+engine and viewer locations. For a full export-access check:
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py --check-all

@@ -18,7 +18,11 @@ import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "models" / "src"))
-FREECADCMD = os.environ.get("FREECADCMD", str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/FreeCAD 1.1/bin/freecadcmd.exe"))
+if sys.platform == "win32":
+    FREECADCMD_DEFAULT = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/FreeCAD 1.1/bin/freecadcmd.exe")
+else:
+    FREECADCMD_DEFAULT = "freecadcmd"  # on PATH after `apt install freecad`
+FREECADCMD = os.environ.get("FREECADCMD", FREECADCMD_DEFAULT)
 
 
 def recipes(model):

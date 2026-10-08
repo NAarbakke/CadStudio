@@ -2,8 +2,8 @@
 
 ## Viewer and saved exports, 2026-10-03
 
-Viewer version: 0.7.10. Served folder:
-`C:/Users/admin1/Documents/Projects/CadStudio/models`.
+Viewer version: 0.7.10. Served folder: the project's `models/` directory
+(Windows 11 at the time of this record).
 
 `tools/start_viewer.py --check-all` completed successfully for all 21 expected
 exports. Each STEP's current assembly JSON and native component geometry
@@ -28,7 +28,11 @@ unbuilt source edits. The viewer never runs a model source when it opens a file.
 Reproduce the access checks from the project root:
 
 ```powershell
-.venv\Scripts\python tools\start_viewer.py --check-all
+.venv\Scripts\python tools\start_viewer.py --check-all   # Windows
+```
+
+```bash
+.venv/bin/python tools/start_viewer.py --check-all       # Ubuntu
 ```
 
 The launcher writes its machine-readable session to ignored

@@ -1,17 +1,24 @@
 # CAD Viewer
 
 CAD Viewer is the browser application bundled with `cadgen==0.7.10` in the
-project `.venv`. Its server runs on this Windows computer and serves `models/`.
-A localhost link works on this computer while the server is running.
+project `.venv`. Its server runs on the computer it was started on and serves
+`models/`. A localhost link works on that computer while the server is running.
 
 ## Open and select models
 
-Double-click `Open CAD Viewer.cmd` in the project root, or run from PowerShell:
+Windows: double-click `Open CAD Viewer.cmd` in the project root, or run from PowerShell.
+Ubuntu: run `./open_cad_viewer.sh` from the project root.
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py --open
 .venv\Scripts\python tools\start_viewer.py ge_e3_turbofan --open
 .venv\Scripts\python tools\start_viewer.py naca_lewis_16in_ramjet --open
+```
+
+```bash
+.venv/bin/python tools/start_viewer.py --open
+.venv/bin/python tools/start_viewer.py ge_e3_turbofan --open
+.venv/bin/python tools/start_viewer.py naca_lewis_16in_ramjet --open
 ```
 
 The launcher finds or starts a detached viewer with `models/` as its working
@@ -41,6 +48,10 @@ For a visual-only mesh export, use the GLB folder or:
 .venv\Scripts\python tools\start_viewer.py ge_e3_turbofan --format GLB --open
 ```
 
+```bash
+.venv/bin/python tools/start_viewer.py ge_e3_turbofan --format GLB --open
+```
+
 STEP supports component selection and topology measurements; GLB/STL provide
 mesh viewing. The viewer renders saved exports. Build the Python source after
 editing geometry to update them.
@@ -54,7 +65,7 @@ record, not a permanently valid endpoint.
 Each invocation replaces this session record; use `--check-all` when you want
 it to include the export-access results.
 
-The detached server continues after the launcher exits. A Windows restart,
+The detached server continues after the launcher exits. A computer restart,
 explicit stop, process termination or crash requires launching it again.
 The project does not install an automatic logon service.
 
@@ -68,6 +79,14 @@ Push-Location models
 Pop-Location
 ```
 
+```bash
+cd models
+../.venv/bin/python -m cadgen.cli viewer --host 127.0.0.1 --json --detach
+../.venv/bin/python -m cadgen.cli viewer list --json
+../.venv/bin/python -m cadgen.cli viewer stop --port 3246
+cd ..
+```
+
 Replace the stop port with the running instance's port. After upgrading cadgen,
 stop and restart the viewer so its Python code and browser assets use the same
 version. Reload the browser page.
@@ -76,6 +95,10 @@ version. Reload the browser page.
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py --check-all
+```
+
+```bash
+.venv/bin/python tools/start_viewer.py --check-all
 ```
 
 This checks every source's expected STEP, GLB and STL export. For STEP it
@@ -90,7 +113,8 @@ fails. Browser appearance still needs a visual check.
   its returned link. The previous server may have stopped or its port changed.
 - **Empty file list:** check the printed `Serving:` path is this project's
   `models` directory, and expand the STEP folder in the panel.
-- **Missing export:** run `.venv\Scripts\python models\src\<model>.py`.
+- **Missing export:** run `.venv\Scripts\python models\src\<model>.py` (Windows) or
+  `.venv/bin/python models/src/<model>.py` (Ubuntu).
   Outputs are ignored by Git and must be rebuilt after a fresh clone.
 - **Compilation error:** retain the reported error and the launcher's server
   log location. Inspect it before forcing a rebuild or removing caches.
