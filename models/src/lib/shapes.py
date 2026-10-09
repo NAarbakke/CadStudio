@@ -18,10 +18,19 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("fins", name, points, thick, n, angle=0)               n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
     ("pipe", name, points, dia)                             solid round pipe along a 3D polyline [(x, y, z)], spherical elbows
                                                             (cadgen and FreeCAD only; the SolidWorks builder raises)
+    ("lathe", name, points, radius, origin=(0, 0, 0), axis=(1, 0, 0), chamfer=False)
+                                                            closed (a, r) polygon revolved about any axis through origin,
+                                                            a along the axis; corners rounded to `radius` (see round_profile),
+                                                            or cut straight across with chamfer=True
+    ("hex_circle", name, origin, axis, r, flats, length, n, angle=0)
+                                                            n hex prisms (nuts, bolt heads) on a circle of radius r about the
+                                                            axis, each along the axis and centred on the plane through origin
+    ("pin_circle", name, origin, axis, r, dia, length, n, angle=0)   the same with round pins (studs)
+                                                            (these three: cadgen and FreeCAD only)
 
 `name` becomes the SolidWorks feature name; `angle` rotates the whole ring about X (degrees).
 """
-from math import cos, pi, radians, sin, sqrt
+from math import acos, cos, pi, radians, sin, sqrt, tan
 
 from cadgen import build123d as bd
 
@@ -146,6 +155,104 @@ def pipe(points, dia):
             + [bd.Pos(*p) * bd.Solid.make_sphere(dia / 2) for p in points[1:-1]])
 
 
+def frame(axis):
+    """(x, y, z) unit vectors for an op axis: z along it, x = Z cross axis (+Y for the engine axis +X)."""
+    z = bd.Vector(axis).normalized()
+    x = bd.Vector(0, 0, 1).cross(z)
+    x = x.normalized() if x.length > 1e-9 else bd.Vector(1, 0, 0)
+    return x, z.cross(x), z
+
+
+def round_profile(points, radius, chamfer=False):
+    """Closed polygon with its corners rounded: [("line", p, q) | ("arc", p, mid, q)] in profile coordinates.
+
+    Each corner gets a tangent arc of `radius`, shortened where an adjacent side is short (tangent
+    length at most 0.4 of it). Corners on the axis (r = 0) and bends under 12 degrees (points along
+    a curve) stay as they are. chamfer=True joins the tangent points with a line instead: use it for a
+    small radius on a large diameter, where a rounded edge meshes into a very large number of triangles.
+    """
+    n, cut = len(points), []
+    for i, v in enumerate(points):
+        p, q = points[i - 1], points[(i + 1) % n]
+        u, w = (p[0] - v[0], p[1] - v[1]), (q[0] - v[0], q[1] - v[1])
+        lu, lw = sqrt(u[0] ** 2 + u[1] ** 2), sqrt(w[0] ** 2 + w[1] ** 2)
+        u, w = (u[0] / lu, u[1] / lu), (w[0] / lw, w[1] / lw)
+        half = acos(max(-1.0, min(1.0, u[0] * w[0] + u[1] * w[1]))) / 2  # half the interior angle
+        if radius <= 0 or abs(v[1]) < 1e-9 or half > radians(84):
+            cut.append((v, None, v))
+            continue
+        d = min(radius / tan(half), 0.4 * lu, 0.4 * lw)
+        r = d * tan(half)
+        bis = (u[0] + w[0], u[1] + w[1])
+        lb = sqrt(bis[0] ** 2 + bis[1] ** 2)
+        k = r / sin(half) - r  # corner to the arc's midpoint, along the bisector
+        cut.append(((v[0] + u[0] * d, v[1] + u[1] * d), (v[0] + bis[0] / lb * k, v[1] + bis[1] / lb * k),
+                    (v[0] + w[0] * d, v[1] + w[1] * d)))
+    segs = []
+    for i, (a, mid, b) in enumerate(cut):
+        if mid is not None:
+            segs.append(("line", a, b) if chamfer else ("arc", a, mid, b))
+        segs.append(("line", b, cut[(i + 1) % n][0]))
+    return segs
+
+
+def lathe(points, radius, origin=(0, 0, 0), axis=(1, 0, 0), chamfer=False):
+    """Revolve a closed (a, r) profile with rounded (or chamfered) corners about the axis through origin."""
+    x, _, z = frame(axis)
+
+    def at(p):
+        return bd.Vector(origin) + z * p[0] + x * p[1]
+    edges = [bd.Edge.make_line(at(s[1]), at(s[2])) if s[0] == "line"
+             else bd.Edge.make_three_point_arc(at(s[1]), at(s[2]), at(s[3])) for s in round_profile(points, radius, chamfer)]
+    return bd.revolve(bd.Face(bd.Wire(edges)), bd.Axis(origin, tuple(z)))
+
+
+def _circle(seed, origin, axis, r, n, angle):
+    """n copies of a seed solid (built along local +Z about the local origin) on a circle about the op axis."""
+    x, _, z = frame(axis)
+    loc = bd.Plane(origin=origin, x_dir=tuple(x), z_dir=tuple(z)).location
+    return [loc * bd.Rot(0, 0, angle + 360 / n * i) * bd.Pos(r, 0, 0) * seed for i in range(n)]
+
+
+def hex_circle(origin, axis, r, flats, length, n, angle=0):
+    """n hex prisms `flats` across, one corner pointing away from the axis."""
+    seed = bd.Pos(0, 0, -length / 2) * bd.extrude(bd.RegularPolygon(flats / 2, 6, major_radius=False), amount=length)
+    return _circle(seed, origin, axis, r, n, angle)
+
+
+def pin_circle(origin, axis, r, dia, length, n, angle=0):
+    return _circle(bd.Cylinder(dia / 2, length), origin, axis, r, n, angle)
+
+
+def along(origin, axis, a):
+    """The point `a` along an op axis from origin."""
+    length = sqrt(sum(c * c for c in axis))
+    return tuple(o + c / length * a for o, c in zip(origin, axis))
+
+
+def flange_bolts(name, origin, axis, r, size, n, faces, angle=0):
+    """Ops for a bolt circle on a flange: a nut and stud end standing on each given face.
+
+    `faces` are (a, side) pairs: the face at `a` along the axis, fasteners on its -1 or +1 side.
+    Nuts are 1.6 x size across flats and 0.8 x size high on a stud of diameter `size`. Nothing
+    passes through the flange, so the fasteners touch it without intersecting it.
+    """
+    ops = []
+    for i, (a, side) in enumerate(faces):
+        ops += [("hex_circle", f"{name}Nuts{i + 1}", along(origin, axis, a + side * 0.4 * size), axis, r,
+                 1.6 * size, 0.8 * size, n, angle),
+                ("pin_circle", f"{name}Studs{i + 1}", along(origin, axis, a + side * 0.65 * size), axis, r,
+                 size, 1.3 * size, n, angle)]
+    return ops
+
+
+def segment(outer, inner, x0, x1):
+    """Closed (x, r) profile of a wall between two sorted tables, cut to x0..x1 (axial slice of a shell)."""
+    def cut(table):
+        return [(x0, interp(table, x0))] + [p for p in table if x0 < p[0] < x1] + [(x1, interp(table, x1))]
+    return cut(outer) + list(reversed(cut(inner)))
+
+
 def tube_profile(x0, x1, r_in, r_out):
     return [(x0, r_in), (x1, r_in), (x1, r_out), (x0, r_out)]
 
@@ -156,14 +263,20 @@ def tube(x0, x1, r_in, r_out):
 
 
 OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "offset_ring": offset_ring, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
-       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring, "pipe": pipe}
+       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring, "pipe": pipe,
+       "lathe": lathe, "hex_circle": hex_circle, "pin_circle": pin_circle}
 
 
 def build(ops):
     """cadgen solid from a recipe (see module docstring)."""
     part = bd.Part()
-    for kind, _name, *args in ops:
-        part = part - revolved(*args) if kind == "cut" else part + OPS[kind](*args)
+    for kind, name, *args in ops:
+        if kind == "cut":
+            part = part - revolved(*args)
+            continue
+        before, part = part.volume, part + OPS[kind](*args)
+        if part.volume < 0.999 * before:  # the kernel has returned an inside-out or partial solid without an error
+            raise ValueError(f"{name}: adding this {kind} lost material (boolean failure); move or reshape it")
     return part
 
 
@@ -174,9 +287,25 @@ def labelled(shape, label, color):
     return shape
 
 
-def assemble(parts, label):
-    """Compound of labelled parts from [(label, color, ops), ...]."""
-    return bd.Compound(children=[labelled(build(ops), name, color) for name, color, ops in parts], label=label)
+def assemble(parts, label, groups=None):
+    """Compound of labelled parts from [(label, color, ops), ...].
+
+    `groups` {group label: [part labels]} nests those parts under a sub-assembly, placed where its
+    first part stands in the list; parts in no group stay at the top level.
+    """
+    owner = {name: group for group, names in (groups or {}).items() for name in names}
+    children, nested = [], {}
+    for name, color, ops in parts:
+        shape, group = labelled(build(ops), name, color), owner.get(name)
+        if group is None:
+            children.append(shape)
+        elif group in nested:
+            nested[group].append(shape)
+        else:
+            nested[group] = [shape]
+            children.append(group)
+    return bd.Compound(children=[bd.Compound(children=nested[c], label=c) if isinstance(c, str) else c
+                                 for c in children], label=label)
 
 
 def x_half(chord, thick, stagger):

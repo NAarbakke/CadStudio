@@ -11,7 +11,7 @@ and pushed into SolidWorks, Fusion or Onshape.
 | Nuclear turbojet | `models/src/lyulka_nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, 13 parts | Layout from a period illustration, scaled to the AL-7 (`profile_builder/Nuclear_turbojet/`) |
 | Tsirkon | `models/src/tsirkon.py` | 3M22 Tsirkon (Zircon) cutaway: launch shroud, radome, seeker, electronics, payload placeholder, two solid motors (case, grain, igniter, nozzle), extended gas duct with fin actuators and bracing spokes, folding fins, raceways, jet vanes; 17 parts | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`profile_builder/Tsirkon/resources/`) |
 | Oreshnik | `models/src/oreshnik.py` | Oreshnik IRBM cutaway: nose fairing, six payload cones on a plate, post-boost stage layout, instrumentation compartment, two solid motors (case, grain, igniter, nozzle), aft skirt; 18 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m), with further references recorded in the source (`profile_builder/Oreshnik/resources/`) |
-| F-1 | `models/src/rocketdyne_f1.py` | Rocketdyne F-1 (Saturn V S-IC) rocket engine: gimbal, hollow LOX dome, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to 10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator, valves, flat-topped LOX dome with ring manifold and elbow inlets, four high-pressure ducts; 12 parts | R-3896-1 technical manual Fig 2-22 envelope dimensions + performance data, heroicrelics section drawings (`profile_builder/F1/`) |
+| F-1 | `models/src/rocketdyne_f1.py` | Rocketdyne F-1 (Saturn V S-IC) rocket engine: gimbal, hollow LOX dome, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to 10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator, valves, flat-topped LOX dome with ring manifold and elbow inlets, four high-pressure ducts, bolted flanges; 42 parts in 8 sub-assemblies | R-3896-1 technical manual Fig 2-22 envelope dimensions + performance data, heroicrelics section drawings (`profile_builder/F1/`) |
 | Ramjet | `models/src/naca_lewis_16in_ramjet.py` | NACA Lewis 16-inch ram jet (1951 altitude-wind-tunnel engine): translating spike, sharp-lip conical diffuser, three-strut centre body with pilot cup, four dual-arc fuel bars with 16 upstream nozzles, gutter-grid flame holder, water-cooled Ø16 in chamber, convergent nozzle, movable tail plug on two strut rings; 9 parts | NACA RM E51C16 Table I coordinates, Figures 1-3 and text; RM E52D08 (`profile_builder/Ramjet/`) |
 
 All engine models are display/study models: the envelope and flowpath follow the sources, but airfoils
@@ -91,6 +91,43 @@ of named ops (revolve, offset revolve, offset ring, spline, cut, blade ring, pin
 STEP/STL/GLB from the recipes and `integrations/solidworks/solidworks_build.py` builds the same recipes as native
 SolidWorks features. Blade rows come from `stage()`, which sizes tips and roots so flat blade
 corners never cut into the casing.
+
+## Model fidelity standard
+
+Every model should read as built hardware, not as a diagram of primitives. A new or edited model
+is expected to have:
+
+- **Finishes, not function colours.** Each part takes a named finish from `lib/materials.py` (base
+  colour, roughness, metalness), and the model passes `materials=` to `@step`. Keep base colours mid
+  to light and metalness moderate (about 0.35 to 0.6): near 1 the Render display turns large
+  surfaces almost black. Finishes are display properties and assign no alloy, density or mass.
+- **Rounded or chamfered edges.** Use the `lathe` op in place of `revolve` for flanges, housings and
+  turned parts; it also revolves about any axis. Chamfer (`chamfer=True`) a small radius on a large
+  thin ring, where a rounded edge meshes into a very large number of triangles.
+- **Fasteners on flanges.** `flange_bolts()` adds a bolt circle (`hex_circle` nuts on `pin_circle`
+  stud ends) standing on a flange face. No holes are cut. One part per bolt circle.
+- **Sub-assemblies of real components.** Split a component into the housings and flanges it is
+  built from, give each a label, and nest them with `GROUPS` passed to `assemble()`, in place of one
+  fused solid per function.
+- **Assumptions declared.** The docstring says which details are for appearance and not from the
+  sources (flange sizes, bolt counts, corner radii, component splits).
+
+Check the saved STEP after every build. Every part must be a valid solid and no two parts may intersect:
+
+```powershell
+.venv\Scripts\python tools\model_check.py models\STEP\rocketdyne_f1.step
+```
+
+Where the model builds in FreeCAD, run `integrations\freecad\freecad_build.py <model>` as well; that
+comparison has caught a part the kernel silently dropped. Review a snapshot in the Render display
+with the floor moved off the axis (`--display '{"mode":"render","floor":{"placement":"lowest"}}'`).
+`lathe`, `hex_circle` and `pin_circle` build in cadgen and FreeCAD; the SolidWorks builder does not
+have them, so bring such a model into SolidWorks with `solidworks_import.py`.
+
+`reports\latex\model_fidelity.py` writes `output/pdf/model_fidelity.pdf`, which measures each model
+against its previous commit (parts, fasteners, rounded profiles, finishes, file sizes). Status: the
+F-1 meets the standard (42 parts in 8 sub-assemblies, 574 fasteners, 11 finishes); the other six
+models do not yet.
 
 ## View
 

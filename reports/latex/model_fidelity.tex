@@ -1,0 +1,288 @@
+% Template for reports/latex/model_fidelity.py, filled by tools/latex_report.py.
+% Every number below comes from the script, not from this file.
+\documentclass{cadstudio}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\title{\VAR{title}}
+\subtitle{\VAR{subtitle}}
+\documentid{\VAR{document_id}}
+\revision{\VAR{revision}}
+\date{\VAR{date}}
+\newcommand{\swatch}[1]{{\setlength{\fboxsep}{0pt}\fbox{\textcolor[HTML]{#1}{\rule{16pt}{7pt}}}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  The CAD models were compared with reference renders of engines produced by other text-to-CAD
+  work, and five shortcomings were identified: no surface finishes, colour used as a function
+  code, primitives standing in for components, no fasteners, and sharp edges throughout. The shape
+  library was extended to remove them and the \VAR{pilot_title} engine was rebuilt as the pilot.
+  It now has \VAR{pilot.after.parts} parts in \VAR{pilot.after.groups} sub-assemblies where it had
+  \VAR{pilot.before.parts} parts in a flat list, \VAR{pilot.after.fasteners} fasteners where it had
+  none, \VAR{pilot.after.rounded} profiles with rounded or chamfered corners, and
+  \VAR{pilot.after.finishes} named finishes. No two parts intersect, and every part rebuilt in
+  FreeCAD from the same recipes matches the cadgen part.
+  \BLOCK{if pending}
+  \VAR{upgraded|length} of \VAR{rows|length} models have been upgraded at this revision.
+  \BLOCK{else}
+  All \VAR{rows|length} models have been upgraded.
+  \BLOCK{endif}
+\end{abstract}
+
+\section{Introduction}
+
+Four reference images were studied: a Raptor engine shown in the CAD Viewer with material
+shading, an exploded radial aircraft engine, and two views of a Raptor in a custom web viewer.
+What separates them from the models in this project is not the accuracy of the main contours,
+which here follow published dimensions, but everything around those contours. The reference
+models have metal that looks like metal, a few real finishes in place of a colour per function,
+bolted flanges, rounded edges that catch a highlight, and an assembly tree that opens into
+sub-assemblies with many parts.
+
+Five additions answer this. They are described in section~\ref{sec:features} and their effect on
+the pilot model is measured in section~\ref{sec:results} against the model as it stood at commit
+\code{\VAR{baseline}}, rebuilt from that commit for the comparison.
+
+\BLOCK{if images}
+\begin{figure}[!htb]
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{\VAR{images.before}}
+    \caption{Before: \VAR{pilot.before.parts} parts}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{\VAR{images.after}}
+    \caption{After: \VAR{pilot.after.parts} parts}
+  \end{subfigure}
+  \caption{\VAR{pilot_title} engine in the viewer's default display, from the same camera
+    position, before and after the upgrade.}
+  \label{fig:beforeafter}
+\end{figure}
+\BLOCK{endif}
+
+\section{What was added}
+\label{sec:features}
+
+\subsection{Finishes}
+
+Each part previously carried one flat colour and no surface properties, so the viewer's Render
+display and the GLB export showed every part as matt plastic. Parts are now assigned a named
+finish from one palette, \code{models/src/lib/materials.py}, which sets base colour, roughness and
+metalness (table~\ref{tab:finishes}). The model declares the assignment once and cadgen writes it
+to the STEP sidecar and into the GLB materials.
+
+Two rules came out of the first renders. Base colours are kept mid to light, because the dark
+greys used before hid the form of the nozzle. Metalness is kept moderate, because with values
+near one the default Render lighting turned large surfaces almost black.
+
+The finishes are display properties. They do not assign an alloy, a density or a mass to a part.
+
+\begin{table}[!htb]
+  \caption{Finishes used by the \VAR{pilot_title} model.}
+  \label{tab:finishes}
+  \begin{tabular}{@{}llcS[table-format=1.2]S[table-format=1.2]S[table-format=2.0]@{}}
+    \toprule
+    Finish & \multicolumn{2}{l}{Base colour} & {Roughness} & {Metalness} & {Parts} \\
+    \midrule
+    \BLOCK{for row in finishes}
+    \VAR{row.name} & \code{\#\VAR{row.hex}} & \swatch{\VAR{row.hex}} & \VAR{"%.2f"|format(row.roughness)} &
+      \VAR{"%.2f"|format(row.metalness)} & \VAR{row.parts} \\
+    \BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Rounded and chamfered edges}
+
+Every revolved profile was a polygon with sharp corners. The new \code{lathe} operation revolves
+the same polygon with each corner replaced by a tangent arc (figure~\ref{fig:corners}). The radius
+is reduced where an adjacent side is short, and corners on the axis and the small bends along a
+curved contour are left alone. The operation also takes an arbitrary axis, so valves, duct flanges
+and the gas generator are turned parts on their own centre lines in place of plain cylinders.
+
+A small radius on a large diameter is expensive to mesh: rounding the hatbands and nozzle hoops
+took the first export of the pilot to about six million triangles. Those large thin rings are
+chamfered instead, which gives the same highlight from a conical face.
+
+\begin{figure}[!htb]
+  \includegraphics{corners.pdf}
+  \caption{Profile of the \VAR{pilot_title} turbopump bearing housing (\code{\VAR{profile_name}}),
+    as written in the recipe and as revolved. Axial position $a$ and radius $r$ are about the
+    turbopump axis.}
+  \label{fig:corners}
+\end{figure}
+
+\subsection{Fasteners}
+
+No model had a fastener. Two pattern operations, \code{hex\_circle} and \code{pin\_circle}, place
+hexagonal prisms and round pins on a circle about any axis, and \code{flange\_bolts} combines them
+into a bolt circle: a nut and a stud end standing on a flange face. Nothing passes through the
+flange, so no holes are cut and the fasteners touch the flange without intersecting it. Each bolt
+circle is one part, which keeps the assembly tree and the files small.
+
+\subsection{Sub-assemblies and component detail}
+
+Parts were fused into one solid per function and listed flat. A model can now name
+sub-assemblies, and the pilot uses them to split its former single solids into the pieces they
+are built from (table~\ref{tab:groups}). The turbopump, formerly one revolved solid, is an inlet,
+two volutes, a bearing housing and a turbine with bolted joints between them. The gas generator,
+formerly a cylinder, has an injector head, flange, combustor, outlet neck and a duct to the
+turbine. The four valves are flanged bodies with actuators.
+
+\begin{table}[!htb]
+  \caption{Sub-assemblies of the \VAR{pilot_title} model.}
+  \label{tab:groups}
+  \begin{tabular}{@{}lS[table-format=2.0]S[table-format=3.0]S[table-format=2.0]S[table-format=1.0]@{}}
+    \toprule
+    Sub-assembly & {Parts} & {Fasteners} & {Rounded profiles} & {Finishes} \\
+    \midrule
+    \BLOCK{for row in groups}
+    \code{\VAR{row.name}} & \VAR{row.parts} & \VAR{row.fasteners} & \VAR{row.rounded} & \VAR{row.finishes} \\
+    \BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+  \tablenote{\VAR{loose|length} further parts stand at the top level:
+    \BLOCK{for label in loose}\code{\VAR{label}}\VAR{", " if not loop.last else "."}\BLOCK{endfor}
+    Fasteners are counted as nuts; each has a stud end.}
+\end{table}
+
+\subsection{Heat tint}
+
+The tube bundle below the chamber jacket is cut into axial bands, each a separate part with its own
+finish, from \qty{\VAR{"%.0f"|format(tint_from)}}{\milli\metre} to
+\qty{\VAR{"%.0f"|format(tint_to)}}{\milli\metre} from the gimbal centre. The bands run
+\VAR{tints|join(", ")} away from the throat, the order in which oxide colours appear as
+temperature falls. This is an appearance choice taken from the reference images. It is not based
+on a photograph or a temperature of the F-1.
+
+\section{Results on the pilot model}
+\label{sec:results}
+
+Table~\ref{tab:pilot} compares the pilot with its previous state.
+\BLOCK{if images}
+Figures~\ref{fig:render} and~\ref{fig:detail} show it in the Render display.
+\BLOCK{endif}
+The number of faces rose by a factor of \VAR{"%.0f"|format(face_ratio)} and the STEP file by a
+factor of \VAR{"%.0f"|format(step_ratio)}. The fasteners account for
+\VAR{"%.0f"|format(fastener_face_share * 100)}\,\% of the faces; each nut and stud is written as its own solid.
+
+\begin{table}[!htb]
+  \caption{\VAR{pilot_title} model before and after the upgrade.}
+  \label{tab:pilot}
+  \begin{tabular}{@{}lS[table-format=5.1]S[table-format=5.1]@{}}
+    \toprule
+    Quantity & {Before} & {After} \\
+    \midrule
+    Parts & \VAR{pilot.before.parts} & \VAR{pilot.after.parts} \\
+    Sub-assemblies & \VAR{pilot.before.groups} & \VAR{pilot.after.groups} \\
+    Recipe operations & \VAR{pilot.before.operations} & \VAR{pilot.after.operations} \\
+    Faces & \VAR{pilot.before.faces} & \VAR{pilot.after.faces} \\
+    Fasteners & \VAR{pilot.before.fasteners} & \VAR{pilot.after.fasteners} \\
+    Rounded or chamfered profiles & \VAR{pilot.before.rounded} & \VAR{pilot.after.rounded} \\
+    Finishes & \VAR{pilot.before.finishes} & \VAR{pilot.after.finishes} \\
+    STEP file, MB & \VAR{"%.1f"|format(pilot.before.step_mb)} & \VAR{"%.1f"|format(pilot.after.step_mb)} \\
+    GLB file, MB & \VAR{"%.1f"|format(pilot.before.glb_mb)} & \VAR{"%.1f"|format(pilot.after.glb_mb)} \\
+    \bottomrule
+  \end{tabular}
+  \tablenote{The GLB is meshed at a relative chord tolerance of \num{\VAR{mesh_tolerance}} and an
+    angular tolerance of \qty{\VAR{mesh_angle}}{\radian}.}
+\end{table}
+
+\BLOCK{if images}
+\begin{figure}[!htb]
+  \includegraphics[width=0.92\textwidth]{\VAR{images.render}}
+  \caption{\VAR{pilot_title} model in the Render display with the assigned finishes.}
+  \label{fig:render}
+\end{figure}
+
+\begin{figure}[!htb]
+  \includegraphics[width=0.92\textwidth]{\VAR{images.detail}}
+  \caption{Powerhead of the \VAR{pilot_title} model: turbopump housings with bolted joints, duct
+    and valve flanges, the heat-tint bands below the chamber jacket and the injector behind
+    the oxidizer dome.}
+  \label{fig:detail}
+\end{figure}
+\BLOCK{endif}
+
+\section{Verification}
+
+The saved STEP of each upgraded model was checked with \code{tools/model\_check.py}: every part
+must be a valid solid of positive volume, and every pair of parts whose bounding boxes overlap is
+intersected with a fuzzy boolean and must share no more than
+\qty{\VAR{"%.0f"|format(pilot.after.check.tolerance_mm3)}}{\milli\metre\cubed}.
+Table~\ref{tab:checks} gives the results. Where a FreeCAD comparison is listed, the model was
+rebuilt in FreeCAD from the same recipes and each part compared with the cadgen part by volume and
+overlap.
+
+\begin{table}[!htb]
+  \caption{Checks on the upgraded models.}
+  \label{tab:checks}
+  \begin{tabular}{@{}lS[table-format=3.0]S[table-format=1.0]S[table-format=4.0]S[table-format=1.0]l@{}}
+    \toprule
+    Model & {Parts} & {Invalid} & {Pairs tested} & {Intersecting} & FreeCAD match \\
+    \midrule
+    \BLOCK{for row in upgraded}
+    \VAR{row.title} & \VAR{row.after.check.parts} & \VAR{row.after.check.invalid|length} &
+      \VAR{row.after.check.pairs_tested} & \VAR{row.after.check.intersecting|length} &
+      \BLOCK{if row.after.freecad}\VAR{row.after.freecad.ok} of \VAR{row.after.freecad.ok + row.after.freecad.bad} parts\BLOCK{else}not run\BLOCK{endif} \\
+    \BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two faults were found and corrected this way during the pilot. A fuel duct flange cut into the
+oxidizer volute and was moved. A fused strut returned an inside-out solid without an error, which
+removed the chamber jacket from the export; the FreeCAD comparison exposed it, the strut was
+reshaped, and \code{build()} now stops when adding a feature reduces the volume of a part.
+
+\section{Status of the models}
+
+Table~\ref{tab:models} lists all models against their state at commit \code{\VAR{baseline}}.
+\BLOCK{if pending}
+\VAR{pending|length} models have not yet been upgraded and are unchanged.
+\BLOCK{endif}
+
+\begin{table}[!htb]
+  \caption{All models, before $\rightarrow$ after.}
+  \label{tab:models}
+  \small
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    Model & Parts & Fasteners & Rounded profiles & Finishes & STEP, MB \\
+    \midrule
+    \BLOCK{for row in rows}
+    \VAR{row.title} &
+      \VAR{row.before.parts} $\rightarrow$ \VAR{row.after.parts} &
+      \VAR{row.before.fasteners} $\rightarrow$ \VAR{row.after.fasteners} &
+      \VAR{row.before.rounded} $\rightarrow$ \VAR{row.after.rounded} &
+      \VAR{row.before.finishes} $\rightarrow$ \VAR{row.after.finishes} &
+      \VAR{"%.1f"|format(row.before.step_mb)} $\rightarrow$ \VAR{"%.1f"|format(row.after.step_mb)} \\
+    \BLOCK{endfor}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\BLOCK{if images and images.gallery}
+\BLOCK{for item in images.gallery}
+\begin{figure}[!htb]
+  \includegraphics[width=0.9\textwidth]{\VAR{item.image}}
+  \caption{\VAR{item.title} in the Render display.}
+\end{figure}
+\BLOCK{endfor}
+\BLOCK{endif}
+
+\section{Limits}
+
+\begin{itemize}
+  \item The added detail is for appearance. Flange sizes, bolt counts, corner radii and the split
+    of components into housings are assumed, not taken from the sources, and each model source
+    says so. The main contours and envelope dimensions are unchanged.
+  \item Finishes appear in the viewer's Render display and in GLB files. The default display
+    shows base colours with plain shading.
+  \item The models lie along the $x$ axis through the origin, so the Render display's floor at
+    $z = 0$ cuts through them. The renders here place the floor at the lowest point of the model.
+  \item The new operations build in cadgen and FreeCAD. The SolidWorks builder does not have them.
+\end{itemize}
+
+\end{document}

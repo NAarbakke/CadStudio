@@ -58,9 +58,9 @@ def revolution(name, sk, axis_y=0.0):
     return rev
 
 
-def polar(obj, name, n):
-    arr = Draft.make_polar_array(obj, number=n, angle=360, center=V(0, 0, 0), use_link=False)
-    arr.Axis = V(1, 0, 0)
+def polar(obj, name, n, axis=V(1, 0, 0), center=V(0, 0, 0)):
+    arr = Draft.make_polar_array(obj, number=n, angle=360, center=center, use_link=False)
+    arr.Axis = axis
     arr.Label = name
     return arr
 
@@ -179,6 +179,38 @@ def op_pipe(name, pts, dia):
         sph.Radius, sph.Placement = dia / 2, App.Placement(V(*p), App.Rotation())
         objs.append(sph)
     return fuse(objs, name)
+
+
+def op_lathe(name, segs, origin, axis):
+    """segs: [("line", p, q) | ("arc", p, mid, q)] in model coordinates, precomputed by freecad_build.py
+    (the rounded profile cadgen revolves). A fixed Part::Feature: edit the radius in the model source."""
+    edges = [Part.LineSegment(V(*s[1]), V(*s[2])).toShape() if s[0] == "line"
+             else Part.Arc(V(*s[1]), V(*s[2]), V(*s[3])).toShape() for s in segs]
+    feature = add("Part::Feature", name)
+    feature.Shape = Part.Face(Part.Wire(edges)).revolve(V(*origin), V(*axis), 360)
+    return feature
+
+
+def circle(seed, name, origin, x, y, z, r, length, n, angle):
+    """n copies of a primitive (along its local +Z) on a circle about the axis z through origin; x, y, z are
+    the op frame from lib.shapes.frame(), precomputed by freecad_build.py."""
+    frame = App.Placement(App.Matrix(x[0], y[0], z[0], origin[0], x[1], y[1], z[1], origin[1],
+                                     x[2], y[2], z[2], origin[2], 0, 0, 0, 1))
+    turn = App.Placement(V(0, 0, 0), App.Rotation(V(0, 0, 1), angle))
+    seed.Placement = frame.multiply(turn).multiply(App.Placement(V(r, 0, -length / 2), App.Rotation()))
+    return polar(seed, name, n, V(*z), V(*origin)) if n > 1 else seed
+
+
+def op_hex_circle(name, origin, x, y, z, r, flats, length, n, angle=0):
+    nut = add("Part::Prism", f"{name}Nut")
+    nut.Polygon, nut.Circumradius, nut.Height = 6, flats / 3 ** 0.5, length
+    return circle(nut, name, origin, x, y, z, r, length, n, angle)
+
+
+def op_pin_circle(name, origin, x, y, z, r, dia, length, n, angle=0):
+    pin = add("Part::Cylinder", f"{name}Pin")
+    pin.Radius, pin.Height = dia / 2, length
+    return circle(pin, name, origin, x, y, z, r, length, n, angle)
 
 
 def fuse(objs, name):

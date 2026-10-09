@@ -26,7 +26,7 @@ FREECADCMD = os.environ.get("FREECADCMD", FREECADCMD_DEFAULT)
 
 
 def recipes(model):
-    from lib.shapes import blade_section
+    from lib.shapes import blade_section, frame, round_profile
     parts = []
     for label, color, ops in importlib.import_module(model).parts():
         out = []
@@ -34,6 +34,15 @@ def recipes(model):
             if op[0] == "loft":  # hand FreeCAD the exact section points cadgen lofts through
                 kind, name, x, sections, n = op
                 op = (kind, name, x, [(s[0], blade_section(x, *s)) for s in sections], n)
+            elif op[0] == "lathe":  # the rounded profile as lines and arcs in model coordinates
+                kind, name, points, radius, origin, axis, chamfer = (*op, *((0, 0, 0), (1, 0, 0), False)[len(op) - 4:])
+                x, _, z = (tuple(v) for v in frame(axis))
+                segs = [(s[0], *[tuple(o + z[i] * a + x[i] * r for i, o in enumerate(origin)) for a, r in s[1:]])
+                        for s in round_profile(points, radius, chamfer)]
+                op = (kind, name, segs, origin, z)
+            elif op[0] in ("hex_circle", "pin_circle"):  # the op frame cadgen places the pattern in
+                kind, name, origin, axis, *rest = op
+                op = (kind, name, origin, *[tuple(v) for v in frame(axis)], *rest)
             out.append(op)
         parts.append((label, color, out))
     return {"model": model, "parts": parts}
