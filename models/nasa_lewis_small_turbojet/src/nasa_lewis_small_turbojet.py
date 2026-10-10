@@ -14,11 +14,22 @@ Sources (profile_builder/Turbojet/README.md):
     main bearings.
 Assumed: airfoil stagger/twist (not tabulated), elliptical sections stacked radially, the 8-vane swirlers
 and liner perforations left out, wall/flange thicknesses, disk web/bore shapes, strut thickness, fuel
-control box size, trunnion boss size and igniter clocking. 14 parts. Axis = +X from the nose tip. Units mm.
+control box size, trunnion boss size and igniter clocking. Axis = +X from the nose tip. Units mm.
+21 parts in 6 sub-assemblies (inlet, compressor, rotating_assembly, combustor, turbine, exhaust).
+Assumed for appearance, not taken from the sources: every bolt circle (counts, sizes, radii) at the inlet
+flange and the five casing joints, edge chamfers on the castings and flanges, the bearings' corner radius, the
+igniter bosses and the split of each igniter into a boss and a plug, and the finishes (lib/materials.py).
+Fasteners are a nut and stud end standing on a flange face; no holes are cut.
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the shared lib/
+
 from cadgen import glb, step, stl
+from lib.materials import finishes, groups, recipes
 from lib.rocket import shell
-from lib.shapes import assemble, interp, tip_radius, x_half
+from lib.shapes import assemble, flange_bolts, interp, tip_radius, x_half
 
 GAP = 1.0              # rotor tip / stator hub clearance (0.4 mm at assembly, TM X-3392 p. 6)
 # Compressor casing inner wall and rotor drum (x, r): Table III tip diameters and spans at the Figure 1 stations
@@ -45,6 +56,13 @@ LINER = [(724, 124.5), (700, 125), (552, 125), (545, 118), (545, 69), (552, 60),
 HOUSING = [(487, 104.5), (500, 110), (540, 127), (580, 140), (600, 143), (645, 143), (700, 131), (728, 128)]
 EXHAUST = [(800, 124), (815, 128), (835, 130), (870, 122), (925, 100)]          # duct inner wall
 CENTREBODY = [(805, 80), (835, 70), (870, 52), (930, 27), (952, 12), (958, 0)]  # tail cone outer surface
+X_AXIS, BEVEL = (1, 0, 0), ((0, 0, 0), (1, 0, 0), True)   # lathe arguments: on the engine axis, corners chamfered
+CLOCK = 11.25          # bolt circles next to the casing split flanges (at ±Z) are turned clear of them
+
+
+def bolts(name, r, size, n, faces, angle=0):
+    """flange_bolts() on the engine axis."""
+    return flange_bolts(name, (0, 0, 0), X_AXIS, r, size, n, faces, angle)
 
 
 def row(name, kind, x, n, hub_sec, tip_sec, outer, hub):
@@ -86,56 +104,68 @@ def rotor():
             *rows("R", C_OUTER, C_HUB, "Comp"), *rows("R", T_OUTER, T_HUB, "Turb")]
 
 
-def parts():
-    """[(label, colour, ops)]: one entry per part (see lib/shapes.py for the op format)."""
+def spec():
+    """[(sub-assembly, part label, finish, ops)]: one entry per part (see lib/shapes.py for the op format)."""
     stators = [r for r in ROWS if r[1] == "S" and r[0].startswith("Comp")]
     exhaust_out = [(x, r + 5) for x, r in EXHAUST]
     return [
-        ("nose_cone", "#2B2F36", [("spline", "NoseCone", [(3, 0), (10, 15), (25, 28), (50, 40), (80, 46), (110, 48)])]),
-        ("inlet_housing", "#C9CED6", [  # one casting: shell, two struts, centrebody with gearbox and front bearing
-            ("revolve", "InletShell", [(140, 101), (140, 124), (148, 124), (148, 130), (262, 130), (268, 112),
-                                       (295, 112), (295, 99.2), (148, 101)]),
+        ("inlet", "nose_cone", "dark_steel", [("spline", "NoseCone", [(3, 0), (10, 15), (25, 28), (50, 40), (80, 46), (110, 48)])]),
+        ("inlet", "inlet_housing", "cast_alloy", [  # one casting: shell, two struts, centrebody with gearbox and front bearing
+            ("lathe", "InletShell", [(140, 101), (140, 124), (148, 124), (148, 130), (262, 130), (268, 112),
+                                     (295, 112), (295, 99.2), (148, 101)], 2, *BEVEL),
             ("revolve", "Centrebody", [(110, 42), (294, 42), (294, 48), (110, 48)]),
             ("ring", "InletStruts", 205, 45, 103, 114, 20, 2, 0),  # two struts (vibration, p. 5), x 148-262
-            ("revolve", "Gearbox", [(150, 0), (250, 0), (250, 36), (155, 36), (155, 42), (150, 42)]),  # 5:1 fuel-pump drive
-            ("revolve", "FrontBearingHousing", [(262, 26), (290, 26), (290, 42), (286, 42), (286, 34), (262, 34)]),
+            ("lathe", "Gearbox", [(150, 0), (250, 0), (250, 36), (155, 36), (155, 42), (150, 42)], 2, *BEVEL),  # 5:1 fuel-pump drive
+            ("lathe", "FrontBearingHousing", [(262, 26), (290, 26), (290, 42), (286, 42), (286, 34), (262, 34)], 1.5, *BEVEL),
             ("pins", "TrunnionBosses", 205, 128, 146, 30, 2, 90)]),  # test-stand trunnion mounting bosses
-        ("fuel_control", "#7C8288", [("ring", "FuelControl", 290, 131, 178, 220, 110, 1, 0)]),  # bolted on top (p. 12)
-        ("compressor_casing", "#AEB5BF", [  # halves split axially; vane stems threaded through with lock nuts
-            ("revolve", "CompCasing", C_OUTER + [(487, 124), (480, 124), (480, 110), (302, 110), (302, 124), (295, 124)]),
+        ("inlet", "inlet_flange_bolts", "fastener", bolts("InletFlange", 113, 4, 12, [(140, -1)])),
+        ("inlet", "fuel_control", "dark_steel", [("ring", "FuelControl", 290, 131, 178, 220, 110, 1, 0)]),  # bolted on top (p. 12)
+        ("inlet", "inlet_joint_bolts", "fastener", bolts("InletJoint", 117, 4, 16, [(295, -1), (302, 1)], CLOCK)),
+
+        ("compressor", "compressor_casing", "machined_steel", [  # halves split axially; vane stems threaded through with lock nuts
+            ("lathe", "CompCasing", C_OUTER + [(487, 124), (480, 124), (480, 110), (302, 110), (302, 124), (295, 124)], 1.5, *BEVEL),
             ("ring", "SplitFlanges", 391, 108, 120, 178, 10, 2, 0, 90),
             *[("pins", f"{name}Nuts", x, 108, 116, 7, n) for name, _, x, n, *_ in stators]]),
-        ("compressor_stators", "#7F8893", rows("S", C_OUTER, C_HUB, "Comp")),
-        ("rotor", "#9AA3AD", rotor()),
-        ("bearings", "#D4B04C", [
-            ("revolve", "FrontBearing", [(268, 12.5), (283, 12.5), (283, 26), (268, 26)]),   # 205 ball, 25 x 52 x 15
-            ("revolve", "RearBearing", [(841, 10), (855, 10), (855, 23.5), (841, 23.5)])]),  # 240 roller, 20 x 47 x 14
-        ("combustor_housing", "#6B717A", [  # hydroformed sheet shell, flanges, two igniters
+        ("compressor", "compressor_stators", "machined_steel", rows("S", C_OUTER, C_HUB, "Comp")),
+        ("compressor", "compressor_joint_bolts", "fastener", bolts("CompressorJoint", 117, 4, 16, [(480, -1), (494, 1)], CLOCK)),
+
+        ("rotating_assembly", "rotor", "nozzle_alloy", rotor()),
+        ("rotating_assembly", "bearings", "brass", [
+            ("lathe", "FrontBearing", [(268, 12.5), (283, 12.5), (283, 26), (268, 26)], 1.5),   # 205 ball, 25 x 52 x 15
+            ("lathe", "RearBearing", [(841, 10), (855, 10), (855, 23.5), (841, 23.5)], 1.5)]),  # 240 roller, 20 x 47 x 14
+
+        ("combustor", "combustor_housing", "nozzle_alloy", [  # hydroformed sheet shell, flanges, two igniter bosses
             ("revolve", "Housing", HOUSING + [(x, r + 2) for x, r in reversed(HOUSING)]),
-            ("revolve", "HousingFwdFlange", [(487, 106.5), (494, 106.5), (494, 124), (487, 124)]),
-            ("revolve", "HousingAftFlange", [(721, 130), (728, 130), (728, 146), (721, 146)]),
-            ("pins", "Igniters", 570, 125, 150, 12, 2, 90)]),
-        ("combustor_liner", "#A0522D", [  # liner with dome, snout, fuel manifold and 12 simplex nozzles
+            ("lathe", "HousingFwdFlange", [(487, 106.5), (494, 106.5), (494, 124), (487, 124)], 1, *BEVEL),
+            ("lathe", "HousingAftFlange", [(721, 130), (728, 130), (728, 146), (721, 146)], 1, *BEVEL),
+            ("pins", "IgniterBosses", 570, 125, 143, 18, 2, 90)]),
+        ("combustor", "igniters", "dark_steel", [("pins", "Igniters", 570, 143, 150, 9, 2, 90)]),  # surface-discharge plugs
+        ("combustor", "combustor_liner", "tint_bronze", [  # liner with dome, snout, fuel manifold and 12 simplex nozzles
             ("revolve", "Liner", LINER),
             ("revolve", "Snout", [(480, 98), (547, 119), (547, 116.5), (484, 98), (547, 71.5), (547, 69)]),
             ("torus", "FuelManifold", 512, 93, 4),
             ("axial_pins", "FuelNozzles", 530, 93, 8, 30, 12),
             ("pins", "FuelFeed", 512, 95, 113, 6, 1)]),
-        ("turbine_nozzle", "#8B5A3C", [  # one-piece 360° casting: vanes between shrouds, outer shroud over the rotor
+        ("combustor", "housing_aft_bolts", "fastener", bolts("HousingAft", 138, 4, 24, [(721, -1)])),
+
+        ("turbine", "turbine_nozzle", "tint_straw", [  # one-piece 360° casting: vanes between shrouds, outer shroud over the rotor
             ("revolve", "InnerShroud", [(725, 79), (752, 79), (752, 82.8), (725, 82.8)]),
             ("revolve", "OuterShroud", [(725, 122.5), (752, 122.5), (752, 124), (800, 124), (800, 128), (725, 128)]),
             *[("loft", name, x, [(s[0] - 2 if i == 0 else s[0] + 2 if i == 2 else s[0], *s[1:])
                                  for i, s in enumerate(sections)], n)
               for _, name, x, sections, n in rows("S", T_OUTER, T_HUB, "Turb")]]),  # roots and tips sunk into the shrouds
-        ("turbine_casing", "#5B636E", [("revolve", "TurbCasing", [(728, 128), (800, 128), (800, 143), (745, 143),
-                                                                  (745, 146), (728, 146)])]),
-        ("exhaust_casing", "#3A3F47", [  # cast duct, three airfoil struts on the tail cone
+        ("turbine", "turbine_casing", "hot_alloy", [
+            ("lathe", "TurbCasing", [(728, 128), (800, 128), (800, 143), (745, 143), (745, 146), (728, 146)], 1, *BEVEL)]),
+
+        ("exhaust", "exhaust_casing", "hot_alloy", [  # cast duct with its two flanges
             ("revolve", "ExhaustDuct", EXHAUST + list(reversed(exhaust_out))),
-            ("revolve", "DuctFwdFlange", [(800, 129), (808, 129), (808, 143), (800, 143)]),
-            ("revolve", "DuctAftFlange", [(918, 103), (925, 100.5), (925, 115), (918, 115)])]),
-        ("exhaust_nozzle", "#2B2F36", [("revolve", "Nozzle", [(925, 100), (965, 84), (965, 86), (931, 99.6), (931, 115),
-                                                                (925, 115)])]),
-        ("tail_cone", "#4A4F57", [
+            ("lathe", "DuctFwdFlange", [(800, 129), (808, 129), (808, 143), (800, 143)], 1, *BEVEL),
+            ("lathe", "DuctAftFlange", [(918, 103), (925, 100.5), (925, 115), (918, 115)], 1, *BEVEL)]),
+        ("exhaust", "exhaust_fwd_bolts", "fastener", bolts("ExhaustFwd", 137, 3.5, 24, [(808, 1)])),
+        ("exhaust", "exhaust_nozzle", "nozzle_alloy", [
+            ("lathe", "Nozzle", [(925, 100), (965, 84), (965, 86), (931, 99.6), (931, 115), (925, 115)], 0.6, *BEVEL)]),
+        ("exhaust", "nozzle_joint_bolts", "fastener", bolts("NozzleJoint", 108, 3.5, 20, [(931, 1)])),
+        ("exhaust", "tail_cone", "hot_alloy", [  # three airfoil struts and the rear bearing housing on the tail cone
             ("revolve", "TailCone", shell(CENTREBODY, 3)),
             ("revolve", "RearBearingHousing", [(832, 23.5), (862, 23.5), (862, 54), (857, 57), (857, 30), (832, 30)]),
             ("fins", "ExhaustStruts", [(834.5, 50), (869.5, 45), *[(x, tip_radius(interp(EXHAUST, x), 0, 8, 0) - 0.2)
@@ -143,11 +173,21 @@ def parts():
     ]
 
 
+SPEC = spec()
+GROUPS = groups(SPEC)
+MATERIALS = finishes(SPEC)
+
+
+def parts():
+    """[(label, colour, ops)] for assemble() and the native CAD builders."""
+    return recipes(SPEC)
+
+
 @glb(out="../GLB/nasa_lewis_small_turbojet.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
 @stl(out="../STL/nasa_lewis_small_turbojet.stl")
-@step(out="../STEP/nasa_lewis_small_turbojet.step")
+@step(out="../STEP/nasa_lewis_small_turbojet.step", materials=MATERIALS)
 def nasa_lewis_small_turbojet():
-    return assemble(parts(), "nasa_lewis_small_turbojet")
+    return assemble(parts(), "nasa_lewis_small_turbojet", GROUPS)
 
 
 if __name__ == "__main__":

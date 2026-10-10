@@ -10,7 +10,7 @@ import traceback
 
 import adsk.core
 
-DEFAULT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "models", "STEP"))
+DEFAULT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "models"))
 
 
 def run(context):

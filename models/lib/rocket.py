@@ -6,6 +6,8 @@ performance or design data. All helpers return (x, r) profiles or recipe ops (se
 """
 from math import cos, pi, sin, sqrt
 
+from lib.shapes import interp
+
 
 def ogive(length, r_base, n=14):
     """Tangent-ogive (x, r) points from the tip (x=0) to the base (x=length)."""
@@ -56,6 +58,22 @@ def _from_radius(pts, y0):
         if r0 <= y0 <= r1:
             return [(x0 + (x1 - x0) * (y0 - r0) / (r1 - r0), y0)] + [pt for pt in pts if pt[1] > y0]
     raise ValueError(f"radius {y0} outside {pts[0][1]}..{pts[-1][1]}")
+
+
+def polar_flange(dome_pts, r0, r1, depth):
+    """(x, r) profile of a flange ring seated on an aft dome's outer surface from radius r0 to r1.
+
+    dome_pts are the dome() points the case is built from, so the seat follows the same chords and the
+    ring touches the case without cutting into it; the flat aft face stands `depth` behind the seat at r0.
+    """
+    by_r = [(r, x) for x, r in dome_pts]
+    seat = [(interp(by_r, r0), r0)] + [p for p in dome_pts if r0 < p[1] < r1] + [(interp(by_r, r1), r1)]
+    return seat + [(seat[0][0] + depth, r1), (seat[0][0] + depth, r0)]
+
+
+def skin_screws(name, x, r, dia, n, angle=0):
+    """Op for a row of n screw heads standing 0.2 x dia proud of a cylindrical skin of radius r at station x."""
+    return ("pins", name, x, r, r + 0.2 * dia, dia, n, angle)
 
 
 def sphere(xc, r, n=12):

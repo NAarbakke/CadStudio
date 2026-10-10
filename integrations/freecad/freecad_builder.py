@@ -181,6 +181,17 @@ def op_pipe(name, pts, dia):
     return fuse(objs, name)
 
 
+def op_sweep(name, segs, dia):
+    """segs: [("line", p, q) | ("arc", p, mid, q, r)] precomputed by freecad_build.py (lib.shapes.sweep_path):
+    a circle swept along them. A fixed Part::Feature: edit the points in the model source."""
+    edges = [Part.LineSegment(V(*s[1]), V(*s[2])).toShape() if s[0] == "line"
+             else Part.Arc(V(*s[1]), V(*s[2]), V(*s[3])).toShape() for s in segs]
+    start, toward = V(*segs[0][1]), V(*segs[0][2])
+    section = Part.Wire([Part.Circle(start, toward - start, dia / 2).toShape()])
+    feature = add("Part::Feature", name)
+    feature.Shape = Part.Wire(edges).makePipeShell([section], True, True)
+    return feature
+
 def op_lathe(name, segs, origin, axis):
     """segs: [("line", p, q) | ("arc", p, mid, q)] in model coordinates, precomputed by freecad_build.py
     (the rounded profile cadgen revolves). A fixed Part::Feature: edit the radius in the model source."""

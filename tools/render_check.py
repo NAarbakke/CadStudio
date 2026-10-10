@@ -1,8 +1,8 @@
 """Visual verification loop: render a model from several views into one sheet, and optionally
 score its side silhouette against a reference picture.
 
-    .venv\\Scripts\\python tools\\render_check.py models\\STEP\\tsirkon.step
-    .venv\\Scripts\\python tools\\render_check.py models\\STEP\\tsirkon.step --ref ref.jpg --ref-box 60,560,1330,640
+    .venv\\Scripts\\python tools\\render_check.py models\\tsirkon\\STEP\\tsirkon.step
+    .venv\\Scripts\\python tools\\render_check.py models\\tsirkon\\STEP\\tsirkon.step --ref ref.jpg --ref-box 60,560,1330,640
 
 Outputs tmp/check/<model>_sheet.png (iso, rear, side, top, section views) and, with --ref,
 tmp/check/<model>_overlay.png: grey = both, red = model only, cyan = reference only, plus the

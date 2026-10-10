@@ -1,10 +1,10 @@
 """Import STEP files into a running SolidWorks session and save them as native files.
 
-    .venv\\Scripts\\python integrations\\solidworks\\solidworks_import.py models\\STEP\\turbofan.step [more.step ...]
+    .venv\\Scripts\\python integrations\\solidworks\\solidworks_import.py models\\turbofan\\STEP\\turbofan.step [more.step ...]
 
 A STEP assembly becomes an .SLDASM plus one .SLDPRT per part; a single body becomes an .SLDPRT.
 These are plain imported solids (no feature tree); for parametric parts see solidworks_build.py.
-Outputs go to models/SolidWorks/imported/<name>/ unless --out is given. Windows + SolidWorks only (COM API).
+Outputs go to models/<name>/SolidWorks/imported/ unless --out is given. Windows + SolidWorks only (COM API).
 """
 import argparse
 import pathlib
@@ -53,13 +53,13 @@ def _save(doc, out_dir, step, name=None):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("steps", nargs="+", type=pathlib.Path)
-    ap.add_argument("--out", type=pathlib.Path, help="output folder (default models/SolidWorks/imported/<name>)")
+    ap.add_argument("--out", type=pathlib.Path, help="output folder (default models/<name>/SolidWorks/imported)")
     ap.add_argument("--close", action="store_true", help="close each document after saving")
     args = ap.parse_args()
 
     sw = connect()
     for step in args.steps:
-        target = import_step(sw, step, args.out or pathlib.Path("models/SolidWorks/imported") / step.stem)
+        target = import_step(sw, step, args.out or pathlib.Path("models") / step.stem / "SolidWorks" / "imported")
         print("saved", target)
         if args.close:
             sw.CloseDoc(target.name)

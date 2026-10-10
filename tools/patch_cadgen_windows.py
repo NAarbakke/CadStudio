@@ -1,7 +1,7 @@
 """Preserve CadStudio's hidden Windows workers after reinstalling cadgen.
 
 Run with the project interpreter after pip install. Only the four known worker
-launch sites in cadgen 0.7.10 are patched; already-patched sites are unchanged.
+launch sites in cadgen 0.7.19 are patched; already-patched sites are unchanged.
 """
 import ast
 from importlib import metadata, util
@@ -43,7 +43,7 @@ def main():
         print("No Windows worker patch needed on this platform.")
         return
     version = metadata.version("cadgen")
-    if version != "0.7.10":
+    if version != "0.7.19":
         raise SystemExit(f"Review worker launch sites before patching cadgen {version}.")
     package = Path(util.find_spec("cadgen").origin).parent
     # Validate every site before changing any of them.

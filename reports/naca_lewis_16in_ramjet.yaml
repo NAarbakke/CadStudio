@@ -5,13 +5,13 @@ document_id: CS-NACA-16-RJ
 revision: A
 status: Sourced study reconstruction. Drawing dimensions describe the CAD model.
 summary: >-
-  A nine-component reconstruction of the Lewis altitude-wind-tunnel ramjet.
+  A fifteen-part reconstruction of the Lewis altitude-wind-tunnel ramjet.
   The inlet spike, diffuser, pilot centre body, fuel bars, flame holder,
   water-cooled chamber, nozzle and movable tail plug follow published
   coordinates and figures, with documented simplifications.
 model:
-  source: models/src/naca_lewis_16in_ramjet.py
-  step: models/STEP/naca_lewis_16in_ramjet.step
+  source: models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py
+  step: models/naca_lewis_16in_ramjet/STEP/naca_lewis_16in_ramjet.step
 materials: {}
 part_materials: {}
 renders:
@@ -32,9 +32,10 @@ renders:
     title: Internal assembly / shell components hidden
     camera: "210:20"
     display: render
-    hide: [inlet_diffuser, injector_section, combustion_chamber, exhaust_nozzle]
+    hide: [inlet_diffuser, injector_section, combustion_chamber, exhaust_nozzle, cooling_coil,
+           diffuser_joint_bolts, spool_joint_bolts, flame_holder_joint_bolts, chamber_joint_bolts, nozzle_joint_bolts]
     caption: >-
-      Four outer components are hidden to expose the spike, pilot centre body,
+      The four shell components, the cooling coil and the joint bolts are hidden to expose the spike, pilot centre body,
       fuel injector, flame holder and tail-plug support structure.
 specifications:
   - label: Chamber inside diameter
@@ -73,9 +74,10 @@ assumptions:
   - "Wall thickness (3/16 in), flange diameter (19 in), and some strut dimensions are assumed."
   - "Some flange and plug details were read from Figure 1 with approximately +/-0.5 in uncertainty."
   - "Straight gutters at 40 degrees approximate the reported corrugated flame holder."
-  - "Cooling turns are separate toroidal rings fused to the chamber, rather than a continuous helix."
+  - "Cooling turns are separate toroidal rings standing on the chamber wall, rather than a continuous helix."
+  - "Bolt circles, flange chamfers and elliptical strut sections are assumed for appearance; no bolt holes are cut."
   - "Instrumentation, external fluid lines and tunnel mounts are omitted."
-  - "No physical material or density has been inferred from display colours."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
 drawings:
   - title: NACA 16-IN RAMJET / GENERAL ARRANGEMENT
     size: A3

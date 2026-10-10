@@ -3,5 +3,6 @@ __pycache__/
 tmp/
 profile_builder/
 inspo/
+vendor/
 
-# models/STEP, STL, GLB, SolidWorks each carry their own .gitignore (generated files, kept out of git)
+# models/.gitignore keeps each model's generated STEP, STL, GLB, FreeCAD and SolidWorks folders out of git

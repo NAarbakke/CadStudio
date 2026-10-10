@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "models" / "src"))
+sys.path.insert(0, str(ROOT / "models"))
 from latex_report import GREY, INK, TEXT_WIDTH_IN, build, plot_style, save_figure
 from model_check import check
 
@@ -110,11 +110,11 @@ def baseline(model):
 
 
 def current(model):
-    source = ROOT / "models" / "src" / f"{model}.py"
-    step, glb = (ROOT / "models" / kind / f"{model}.{kind.lower()}" for kind in ("STEP", "GLB"))
+    source = ROOT / "models" / model / "src" / f"{model}.py"
+    step, glb = (ROOT / "models" / model / kind / f"{model}.{kind.lower()}" for kind in ("STEP", "GLB"))
     module = load(source, f"current_{model}")
     if not step.is_file():
-        raise FileNotFoundError(f"{step} is missing; run models/src/{model}.py first")
+        raise FileNotFoundError(f"{step} is missing; run models/{model}/src/{model}.py first")
     result = cached(ROOT / "tmp" / "check" / f"{model}_check.json", step, lambda: check(step))
     log = ROOT / "tmp" / "check" / f"{model}_freecad.log"
     freecad = None
@@ -204,7 +204,7 @@ def main():
     profile_name, profile_radius, _ = figure_corners(module, WORK / "corners.pdf")
     images = None
     if not args.no_render:
-        step, old_step = ROOT / "models" / "STEP" / f"{PILOT}.step", OLD / "STEP" / f"{PILOT}.step"
+        step, old_step = ROOT / "models" / PILOT / "STEP" / f"{PILOT}.step", OLD / "STEP" / f"{PILOT}.step"
         images = {"before": snapshot(old_step, WORK / "before_solid.png", VIEW),
                   "after": snapshot(step, WORK / "after_solid.png", VIEW),
                   "render": snapshot(step, WORK / "after_render.png", VIEW, RENDER),
@@ -213,16 +213,16 @@ def main():
         for row in rows:
             if row["after"]["upgraded"] and row["model"] != PILOT:
                 gallery.append({"title": row["title"], "image": snapshot(
-                    ROOT / "models" / "STEP" / f"{row['model']}.step", WORK / f"{row['model']}_render.png", VIEW, RENDER,
+                    ROOT / "models" / row["model"] / "STEP" / f"{row['model']}.step", WORK / f"{row['model']}_render.png", VIEW, RENDER,
                     (2400, 1100))})
         images["gallery"] = gallery
 
     from cadgen import read_step
-    leaves = list(read_step(str(ROOT / "models" / "STEP" / f"{PILOT}.step")).leaves)
+    leaves = list(read_step(str(ROOT / "models" / PILOT / "STEP" / f"{PILOT}.step")).leaves)
     fastener_faces = sum(len(c.faces()) for c in leaves if by_label[c.label][0] == "fastener")
 
     mesh = re.search(r"mesh_tolerance=([\d.e-]+), mesh_angular_tolerance=([\d.]+)",
-                     (ROOT / "models" / "src" / f"{PILOT}.py").read_text(encoding="utf-8"))
+                     (ROOT / "models" / PILOT / "src" / f"{PILOT}.py").read_text(encoding="utf-8"))
     context = {
         "title": "Model fidelity upgrade", "subtitle": "Finishes, rounded edges, fasteners and sub-assemblies",
         "document_id": "CS-TR-002", "revision": "A", "date": f"{date.today().day} {date.today():%B %Y}",

@@ -38,6 +38,11 @@ Axis = +X from the tip. Units mm.
 """
 from math import atan, cos, radians, sin, sqrt, tan
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the shared lib/
+
 from cadgen import glb, step, stl
 from lib.rocket import dome, motor, shell, smooth, tube
 from lib.shapes import assemble, interp
@@ -178,7 +183,7 @@ def parts():
                                        (RING_FACE, R2), (RING[0], R2)]),
             ("ring", "SeparationFittings", 4600, 735, 772, 50, 50, 16, 0, 11.25),  # fig01: 16 notches in the ring
             ("axial_pins", "GuidePins", RING_FACE + 20, 715, 24, 40, 4, 22.5),  # fig02: 4 pins on the aft face
-            ("ring", "Struts", 4600, 340, 772, 100, 50, 4, 0, 45),
+            ("ring", "Struts", 4610, 340, 772, 80, 50, 4, 0, 45),  # aft of the PBV frame, which ends at RING[0]
             ("pins", "GasPipes", 4600, 300, PB_RV, 80, 4),
             ("axial_pins", "ValveHousings", 4600, PB_RV, 150, 160, 4),
             ("offset_ring", "AftNozzles", nozzle_cup(4680, 4830), PB_RV, 4),

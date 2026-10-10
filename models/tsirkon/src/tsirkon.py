@@ -15,6 +15,11 @@ Illustration level: parts are placed and proportioned from these sources; the gr
 cylindrical-bore cartridges and the payload is an empty placeholder volume. Station positions
 ~±50 mm; internal dimensions are estimates. Axis = +X from the nose tip. Units mm.
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the shared lib/
+
 from cadgen import glb, step, stl
 from lib.rocket import motor, ogive, shell, tube
 from lib.shapes import assemble, tip_radius

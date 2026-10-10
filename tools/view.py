@@ -1,7 +1,7 @@
 """Interactive PyVista viewer for STEP, GLB and STL files.
 
-    .venv\\Scripts\\python tools\\view.py models\\STEP\\tsirkon.step
-    .venv\\Scripts\\python tools\\view.py models\\GLB\\tsirkon.glb shot.png   # render to a file instead
+    .venv\\Scripts\\python tools\\view.py models\\tsirkon\\STEP\\tsirkon.step
+    .venv\\Scripts\\python tools\\view.py models\\tsirkon\\GLB\\tsirkon.glb shot.png   # render to a file instead
 
 STEP is read through build123d (OCP) and tessellated finely, keeping part colours, so it looks
 best; GLB/STL are drawn from their exported triangles.

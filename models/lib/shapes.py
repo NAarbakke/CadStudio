@@ -18,6 +18,8 @@ same recipe into native SolidWorks features, so both outputs come from one set o
     ("fins", name, points, thick, n, angle=0)               n flat fins: (x, r) planform polygon, thickness thick, first fin at +Y
     ("pipe", name, points, dia)                             solid round pipe along a 3D polyline [(x, y, z)], spherical elbows
                                                             (cadgen and FreeCAD only; the SolidWorks builder raises)
+    ("sweep", name, points, dia, radius)                    solid round duct along a 3D polyline whose corners are arcs of
+                                                            `radius` (see sweep_path); cadgen and FreeCAD only
     ("lathe", name, points, radius, origin=(0, 0, 0), axis=(1, 0, 0), chamfer=False)
                                                             closed (a, r) polygon revolved about any axis through origin,
                                                             a along the axis; corners rounded to `radius` (see round_profile),
@@ -155,6 +157,41 @@ def pipe(points, dia):
             + [bd.Pos(*p) * bd.Solid.make_sphere(dia / 2) for p in points[1:-1]])
 
 
+def sweep_path(points, radius):
+    """A 3D polyline with every corner turned into a tangent arc: [("line", p, q) | ("arc", p, mid, q, r)].
+
+    Each arc has `radius`, shortened where a leg is short (tangent length at most 0.45 of it). The end
+    points stay where they are. Corners turning less than 1 degree are passed straight through.
+    """
+    def unit(v):
+        length = sqrt(sum(c * c for c in v))
+        return [c / length for c in v], length
+    segs, at = [], tuple(points[0])
+    for p, v, q in zip(points, points[1:], points[2:]):
+        (u, lu), (w, lw) = unit([a - b for a, b in zip(p, v)]), unit([a - b for a, b in zip(q, v)])
+        turn = pi - acos(max(-1.0, min(1.0, sum(a * b for a, b in zip(u, w)))))
+        if turn < radians(1):
+            continue
+        d = min(radius * tan(turn / 2), 0.45 * lu, 0.45 * lw)
+        r = d / tan(turn / 2)
+        bis, _ = unit([a + b for a, b in zip(u, w)])
+        a, b = tuple(c + e * d for c, e in zip(v, u)), tuple(c + e * d for c, e in zip(v, w))
+        mid = tuple(c + e * (r / cos(turn / 2) - r) for c, e in zip(v, bis))
+        segs += [("line", at, a), ("arc", a, mid, b, r)]
+        at = b
+    return segs + [("line", at, tuple(points[-1]))]
+
+
+def sweep(points, dia, radius):
+    """A circle of `dia` swept along sweep_path(points, radius): a duct with real bends and flat ends."""
+    segs = sweep_path(points, radius)
+    if any(s[0] == "arc" and s[4] <= dia / 2 for s in segs):
+        raise ValueError("a bend is tighter than the duct is wide; lengthen the legs or reduce the diameter")
+    edges = [bd.Edge.make_line(s[1], s[2]) if s[0] == "line" else bd.Edge.make_three_point_arc(s[1], s[2], s[3])
+             for s in segs]
+    start = bd.Plane(origin=points[0], z_dir=tuple(bd.Vector(segs[0][2]) - bd.Vector(segs[0][1])))
+    return bd.Solid.sweep(bd.Face(bd.Wire(bd.Edge.make_circle(dia / 2, start))), bd.Wire(edges))
+
 def frame(axis):
     """(x, y, z) unit vectors for an op axis: z along it, x = Z cross axis (+Y for the engine axis +X)."""
     z = bd.Vector(axis).normalized()
@@ -263,8 +300,17 @@ def tube(x0, x1, r_in, r_out):
 
 
 OPS = {"revolve": revolved, "offset_revolve": offset_revolve, "duct": duct, "fins": fins, "offset_ring": offset_ring, "spline": lambda pts: revolved(pts, spline=True), "torus": torus,
-       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring, "pipe": pipe,
+       "ring": blade_ring, "pins": pins, "axial_pins": axial_pins, "loft": loft_ring, "pipe": pipe, "sweep": sweep,
        "lathe": lathe, "hex_circle": hex_circle, "pin_circle": pin_circle}
+
+
+def exact_volume(shape, eps=1e-6):
+    """Volume by adaptive integration: build123d's `.volume` is ~10 % off on spline lofts (blade rows)."""
+    from OCP.BRepGProp import BRepGProp
+    from OCP.GProp import GProp_GProps
+    props = GProp_GProps()
+    BRepGProp.VolumeProperties_s(shape.wrapped, props, eps, False)
+    return props.Mass()
 
 
 def build(ops):
@@ -274,8 +320,10 @@ def build(ops):
         if kind == "cut":
             part = part - revolved(*args)
             continue
-        before, part = part.volume, part + OPS[kind](*args)
-        if part.volume < 0.999 * before:  # the kernel has returned an inside-out or partial solid without an error
+        base, part = part, part + OPS[kind](*args)
+        # the kernel can return an inside-out or partial solid without an error; `.volume` is the cheap test,
+        # confirmed by integration because it also drops when a spline loft is added to a sound solid
+        if part.volume < 0.999 * base.volume and exact_volume(part) < 0.999 * exact_volume(base):
             raise ValueError(f"{name}: adding this {kind} lost material (boolean failure); move or reshape it")
     return part
 

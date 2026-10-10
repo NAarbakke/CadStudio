@@ -136,7 +136,7 @@ def _about_x(p, angle):
 
 
 class PartBuilder:
-    """Builds one native part from a recipe (models/src/lib/shapes.py): one method per op kind.
+    """Builds one native part from a recipe (models/lib/shapes.py): one method per op kind.
 
     Revolve sketches are fully dimensioned (vertex i -> x<i>/r<i>); blade, pin and loft sections are
     fixed geometry on named reference planes; rings are one feature + a circular pattern whose count
@@ -329,7 +329,7 @@ class PartBuilder:
         self.add_global(f"{name}_count", n)
         self.link(f"D1@{name}", f"{name}_count")
 
-    # ---- ops (same names and arguments as the recipe ops in models/src/lib/shapes.py) ----
+    # ---- ops (same names and arguments as the recipe ops in models/lib/shapes.py) ----
 
     def revolve(self, name, points, cut=False, axis_y=0.0):
         """Closed (x, r) profile on the Front Plane revolved 360° about X (or a parallel line at axis_y).
@@ -493,9 +493,9 @@ class PartBuilder:
     def loft(self, name, x, sections, n):
         """n blades lofted through closed-spline sections [(r, chord, thick, twist°)] on radial planes.
 
-        Section points come from blade_section() in models/src/lib/shapes.py, the same points cadgen lofts.
+        Section points come from blade_section() in models/lib/shapes.py, the same points cadgen lofts.
         """
-        from lib.shapes import blade_section  # models/src is on sys.path (see solidworks_build.py)
+        from lib.shapes import blade_section  # models/ is on sys.path (see solidworks_build.py)
         self.axis()
         before, profiles = {b.Name for b in self._bodies()}, []
         for i, (r, chord, thick, twist) in enumerate(sections):

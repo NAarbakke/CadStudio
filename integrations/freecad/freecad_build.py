@@ -2,9 +2,9 @@
 
     .venv\\Scripts\\python integrations\\freecad\\freecad_build.py MODEL [--no-verify]
 
-Evaluates models/src/<MODEL>.py parts() here (FreeCAD's Python has no cadgen), writes the recipes
+Evaluates models/<MODEL>/src/<MODEL>.py parts() here (FreeCAD's Python has no cadgen), writes the recipes
 as JSON, runs integrations/freecad/freecad_builder.py in freecadcmd, and saves
-models/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like solidworks/solidworks_verify.py
+models/<MODEL>/FreeCAD/<MODEL>.FCStd. Then each part is compared with the cadgen part like solidworks/solidworks_verify.py
 (volume, fuzzy-boolean overlap). FreeCAD 1.x; set FREECADCMD if it is not in the default place.
 """
 import argparse
@@ -17,7 +17,7 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "models" / "src"))
+sys.path.insert(0, str(ROOT / "models"))  # the shared lib/
 if sys.platform == "win32":
     FREECADCMD_DEFAULT = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Programs/FreeCAD 1.1/bin/freecadcmd.exe")
 else:
@@ -26,7 +26,7 @@ FREECADCMD = os.environ.get("FREECADCMD", FREECADCMD_DEFAULT)
 
 
 def recipes(model):
-    from lib.shapes import blade_section, frame, round_profile
+    from lib.shapes import blade_section, frame, round_profile, sweep_path
     parts = []
     for label, color, ops in importlib.import_module(model).parts():
         out = []
@@ -40,6 +40,9 @@ def recipes(model):
                 segs = [(s[0], *[tuple(o + z[i] * a + x[i] * r for i, o in enumerate(origin)) for a, r in s[1:]])
                         for s in round_profile(points, radius, chamfer)]
                 op = (kind, name, segs, origin, z)
+            elif op[0] == "sweep":  # the path as lines and arcs, the same ones cadgen sweeps along
+                kind, name, points, dia, radius = op
+                op = (kind, name, sweep_path(points, radius), dia)
             elif op[0] in ("hex_circle", "pin_circle"):  # the op frame cadgen places the pattern in
                 kind, name, origin, axis, *rest = op
                 op = (kind, name, origin, *[tuple(v) for v in frame(axis)], *rest)
@@ -52,7 +55,7 @@ def verify(model, steps):
     from cadgen import build123d as bd
     from cadgen import read_step
     from compare import compare
-    ref = {c.label: c for c in read_step(str(ROOT / "models" / "STEP" / f"{model}.step")).leaves}
+    ref = {c.label: c for c in read_step(str(ROOT / "models" / model / "STEP" / f"{model}.step")).leaves}
     lofted = {n for n, _, ops in importlib.import_module(model).parts() if any(o[0] in ("loft", "duct") for o in ops)}
     ok = True
     for f in sorted(steps.glob("*.step")):
@@ -68,8 +71,9 @@ def main():
     ap.add_argument("model")
     ap.add_argument("--no-verify", action="store_true")
     args = ap.parse_args()
-    out = ROOT / "models" / "FreeCAD" / f"{args.model}.FCStd"
+    out = ROOT / "models" / args.model / "FreeCAD" / f"{args.model}.FCStd"
     out.parent.mkdir(parents=True, exist_ok=True)
+    sys.path.insert(0, str(ROOT / "models" / args.model / "src"))
     work = pathlib.Path(tempfile.mkdtemp(prefix=f"fc_{args.model}_"))
     (work / "steps").mkdir()
     (work / "recipe.json").write_text(json.dumps(recipes(args.model)), encoding="utf-8")

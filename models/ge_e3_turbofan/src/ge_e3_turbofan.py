@@ -14,11 +14,22 @@ Sources (see profile_builder/Turbofan/README.md):
 Stations and radii are digitized from Figure 2 (scale from the fan diameter, ~±15 mm).
 Airfoil shapes (flat plates), the mixer lobes (radial sidewalls only) and internal structure are simplified.
 Axis = +X, x = 0 at the fan leading edge (fan face). Units mm.
+18 parts in 4 sub-assemblies (fan_module, static_structure, spools, core_stators) plus the nacelle.
+Assumed for appearance, not taken from the sources: the rounding of the nacelle lip and trailing edge, of
+the fan frame hub and of the plug's forward corner, the plug mounting bolts and the tie bolts between the
+two HPT disks (counts, sizes, radii), the split of each spool into a shaft and its rotors, and the finishes
+(lib/materials.py). Fasteners are a nut and stud end standing on a face; no holes are cut.
 """
 from math import cos, radians
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the shared lib/
+
 from cadgen import glb, step, stl
-from lib.shapes import assemble, interp, stage, tip_radius, tube_profile
+from lib.materials import finishes, groups, recipes
+from lib.shapes import assemble, flange_bolts, interp, stage, tip_radius, tube_profile, x_half
 
 FAN_TIP_R = 1054.0     # Table I: fan Ø2108
 FAN_CASE_R = 1059.0    # 5 mm tip clearance
@@ -37,10 +48,11 @@ BYPASS_COWL = [(240, 690), (500, 700), (800, 655), (1200, 630), (2000, 620), (26
 
 def rows(prefix, xs, last_pitch, r_stagger, s_stagger, r_n, s_n, thick=3):
     """Rotor at each x, stator half a pitch behind it; chords scale with the local pitch. r_n/s_n: counts per row."""
-    out = []
+    out, before = [], None
     for i, (x, nxt) in enumerate(zip(xs, xs[1:] + [xs[-1] + last_pitch]), 1):
         p = nxt - x
-        out += [(f"{prefix}{i}Rotor", "R", x, 0.4 * p / cos(radians(r_stagger)), thick, r_n[i - 1], r_stagger),
+        rp, before = min(p, before or p), p   # rotor chord from the shorter pitch either side: clears the stator ahead
+        out += [(f"{prefix}{i}Rotor", "R", x, 0.4 * rp / cos(radians(r_stagger)), thick, r_n[i - 1], r_stagger),
                 (f"{prefix}{i}Stator", "S", x + p / 2, 0.4 * p / cos(radians(s_stagger)), thick, s_n[i - 1], s_stagger)]
     return out
 
@@ -62,9 +74,10 @@ def row_ops(stages, kind, bore=0):
 
 def nacelle():
     """Long-duct mixed-flow nacelle: highlight 1590 mm ahead of the fan, 6033 mm long, Ø1590 exit."""
-    outer = [(-1590, 1070), (-1400, 1190), (-900, 1240), (0, 1244.5), (1500, 1244.5), (3000, 1100), (4443, 820)]
-    inner = [(4443, 795), (2500, 1000), (1000, FAN_CASE_R), (0, FAN_CASE_R), (-400, 1040), (-1400, 1010), (-1560, 1040)]
-    return [("revolve", "Nacelle", outer + inner)]
+    outer = [(-1590, 1080), (-1400, 1190), (-900, 1240), (0, 1244.5), (1500, 1244.5), (3000, 1100), (4443, 820)]
+    inner = [(4443, 795), (2500, 1000), (1000, FAN_CASE_R), (0, FAN_CASE_R), (-400, 1040), (-1400, 1010), (-1560, 1040), (-1590, 1060)]
+    # lathe rounds the lip, the forebody knuckle and the trailing edge; the lip keeps a 4 mm land at the highlight station
+    return [("lathe", "Nacelle", outer + inner, 60)]
 
 
 def fan():
@@ -76,13 +89,17 @@ def fan():
             ("revolve", "PartSpanShroud", [(78, 670), (108, 670), (108, 680), (78, 680)])]  # clappers at 50 % span
 
 
-def lp_spool():
-    """Fan-driven spool: shaft, booster drum with the quarter-stage blades, 5 LPT rotors."""
+def booster():
+    """Booster drum on the LP shaft with the 56 quarter-stage blades."""
     booster_tip = tip_radius(interp(GAS_OUTER, 425) - GAP, 67, 4, 40)
-    return [("revolve", "LPShaft", tube_profile(186, 3075, 0, LP_SHAFT_R)),
-            ("revolve", "BoosterDrum", [(186, LP_SHAFT_R), (186, 318), (470, 436), (470, LP_SHAFT_R)]),
-            ("ring", "BoosterRotor", 400, interp(GAS_HUB, 400) - 10, booster_tip, 67, 4, 56, 40),  # quarter stage, 56 blades
-            *row_ops(LPT, "R", LP_SHAFT_R)]
+    return [("revolve", "BoosterDrum", [(186, LP_SHAFT_R), (186, 318), (470, 436), (470, LP_SHAFT_R)]),
+            ("ring", "BoosterRotor", 400, interp(GAS_HUB, 400) - 10, booster_tip, 67, 4, 56, 40)]
+
+
+def hpt_tie_bolts():
+    """Bolt circle between the two HPT disks: nuts on the facing disk faces."""
+    dx = x_half(*HPT[1][3:5], HPT[1][6]) + 2   # stage(): the disk stands 2 mm past the blade row on both sides
+    return flange_bolts("HPTTie", (0, 0, 0), (1, 0, 0), 180, 12, 30, [(HPT[1][2] + dx, 1), (HPT[3][2] - dx, -1)])
 
 
 def core_casing():
@@ -110,35 +127,56 @@ def exhaust_plug():
     """Centre plug held by 8 LPT aft-frame struts."""
     x, chord, thick = 3110, 50, 12
     tip = tip_radius(min(interp(GAS_OUTER, x - chord / 2), interp(GAS_OUTER, x + chord / 2)), chord, thick, 0)
-    return [("revolve", "Plug", [(3080, 0), (3080, 309), (3300, 280), (3900, 160), (4580, 0)]),
+    return [("lathe", "Plug", [(3080, 0), (3080, 309), (3300, 280), (3900, 160), (4580, 0)], 20),
             ("ring", "PlugStruts", x, 280, tip, chord, thick, 8, 0)]
 
 
-def parts():
-    """[(label, colour, ops)]: one entry per part (see lib/shapes.py for the op format)."""
+def spec():
+    """[(sub-assembly or None, part label, finish, ops)]: one entry per part (see lib/shapes.py for the op format)."""
     return [
-        ("nacelle", "#D9DDE3", nacelle()),
-        ("spinner", "#2B2F36", [("spline", "Spinner", [(-568, 0), (-400, 190), (-200, 295), (0, 330)])]),
-        ("fan", "#8A939E", fan()),
-        ("core_casing", "#5B636E", core_casing()),
-        ("fan_frame_hub", "#6E7782", [  # static inner wall of the gooseneck duct from the booster to the HPC inlet
-            ("revolve", "FrameHub", [(475, 436), (800, 360), (1100, 252), (1160, 232), (1160, 130), (475, 130)])]),
-        ("lp_spool", "#9AA3AD", lp_spool()),
-        ("hp_spool", "#B8A07A", [("revolve", "HPShaft", tube_profile(*HP_SHAFT)), *row_ops(HPC + HPT, "R", HP_SHAFT[3])]),
-        ("combustor", "#A0522D", combustor()),
-        ("exhaust_plug", "#3A3F47", exhaust_plug()),
-        ("hpc_stators", "#7F8893", row_ops(HPC, "S")),
-        ("hpt_nozzles", "#8B5A3C", row_ops(HPT, "S")),
-        ("lpt_stators", "#8B6B4A", row_ops(LPT, "S")),
+        (None, "nacelle", "paint_grey", nacelle()),
+
+        ("fan_module", "spinner", "dark_steel", [("spline", "Spinner", [(-568, 0), (-400, 190), (-200, 295), (0, 330)])]),
+        ("fan_module", "fan", "machined_steel", fan()),
+
+        ("static_structure", "core_casing", "cast_alloy", core_casing()),
+        ("static_structure", "fan_frame_hub", "cast_alloy", [  # static inner wall of the gooseneck duct from the booster to the HPC inlet
+            ("lathe", "FrameHub", [(475, 436), (800, 360), (1100, 252), (1160, 232), (1160, 130), (475, 130)], 6)]),
+        ("static_structure", "exhaust_plug", "hot_alloy", exhaust_plug()),
+        ("static_structure", "plug_bolts", "fastener", flange_bolts("Plug", (0, 0, 0), (1, 0, 0), 200, 16, 24, [(3080, -1)])),
+
+        # fan-driven spool: shaft, booster, 5 LPT rotors; core spool: shaft, 10 HPC rotors, 2 HPT rotors
+        ("spools", "lp_shaft", "dark_steel", [("revolve", "LPShaft", tube_profile(186, 3075, 0, LP_SHAFT_R))]),
+        ("spools", "booster", "machined_steel", booster()),
+        ("spools", "lpt_rotor", "hot_alloy", row_ops(LPT, "R", LP_SHAFT_R)),
+        ("spools", "hp_shaft", "dark_steel", [("revolve", "HPShaft", tube_profile(*HP_SHAFT))]),
+        ("spools", "hpc_rotor", "nozzle_alloy", row_ops(HPC, "R", HP_SHAFT[3])),
+        ("spools", "hpt_rotor", "hot_alloy", row_ops(HPT, "R", HP_SHAFT[3])),
+        ("spools", "hpt_tie_bolts", "fastener", hpt_tie_bolts()),
+
+        ("core_stators", "combustor", "tint_bronze", combustor()),
+        ("core_stators", "hpc_stators", "machined_steel", row_ops(HPC, "S")),
+        ("core_stators", "hpt_nozzles", "tint_straw", row_ops(HPT, "S")),
+        ("core_stators", "lpt_stators", "hot_alloy", row_ops(LPT, "S")),
     ]
+
+
+SPEC = spec()
+GROUPS = groups(SPEC)
+MATERIALS = finishes(SPEC)
+
+
+def parts():
+    """[(label, colour, ops)] for assemble() and the native CAD builders."""
+    return recipes(SPEC)
 
 
 @glb(out="../GLB/ge_e3_turbofan.glb", mesh_tolerance=3e-4, mesh_angular_tolerance=0.15)
 @stl(out="../STL/ge_e3_turbofan.stl")
-@step(out="../STEP/ge_e3_turbofan.step")
+@step(out="../STEP/ge_e3_turbofan.step", materials=MATERIALS)
 def ge_e3_turbofan():
-    return assemble(parts(), "ge_e3_turbofan")
+    return assemble(parts(), "ge_e3_turbofan", GROUPS)
 
 
 if __name__ == "__main__":
-    turbofan()
+    ge_e3_turbofan()

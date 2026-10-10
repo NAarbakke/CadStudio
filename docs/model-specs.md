@@ -2,7 +2,7 @@
 
 ## Current state
 
-The seven models in `models/src/` are Python scripts. Dimensions, stations,
+The ten models in `models/<model>/src/` are Python scripts. Dimensions, stations,
 profile tables, counts and derived formulas live in constants and `parts()`
 recipes. `lib/shapes.py` builds those recipes; the native CAD integrations read
 the same recipes. Part entries contain a label, display colour and operations.

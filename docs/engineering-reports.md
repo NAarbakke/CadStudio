@@ -13,7 +13,7 @@ From the CadStudio root. Windows (PowerShell):
 ```powershell
 .venv\Scripts\python -m pip install -r requirements.txt
 .venv\Scripts\python tools\patch_cadgen_windows.py
-.venv\Scripts\python models\src\naca_lewis_16in_ramjet.py
+.venv\Scripts\python models\naca_lewis_16in_ramjet\src\naca_lewis_16in_ramjet.py
 .venv\Scripts\python tools\engineering_report.py reports\naca_lewis_16in_ramjet.yaml
 ```
 
@@ -21,7 +21,7 @@ Ubuntu (the engine install is blocked on Linux for now; see [Ubuntu setup](ubunt
 
 ```bash
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python models/src/naca_lewis_16in_ramjet.py
+.venv/bin/python models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py
 .venv/bin/python tools/engineering_report.py reports/naca_lewis_16in_ramjet.yaml
 ```
 

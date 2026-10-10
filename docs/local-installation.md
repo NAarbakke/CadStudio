@@ -1,15 +1,16 @@
 # Local installation and updates
 
-Inventory recorded on 2026-10-03 on Windows 11. Paths are relative to the
+Inventory recorded on 2026-10-03 on Windows 11; engine updated to 0.7.19 on 2026-10-10. Paths are relative to the
 project root, which is wherever the repository is cloned.
 
 | Component | Location | Version / role |
 |---|---|---|
 | Project Python | `.venv/Scripts/python.exe` (Windows) or `.venv/bin/python` (Ubuntu) | Python 3.13 virtual environment |
-| CAD engine | `.venv/Lib/site-packages/cadgen/` (Windows) or `.venv/lib/python3.*/site-packages/cadgen/` (Ubuntu) | cadgen 0.7.10, build123d/OpenCascade, exports and snapshots |
+| CAD engine | `.venv/Lib/site-packages/cadgen/` (Windows) or `.venv/lib/python3.*/site-packages/cadgen/` (Ubuntu) | cadgen 0.7.19, build123d/OpenCascade, exports and snapshots |
 | Browser viewer | `cadgen/viewer/` inside the site-packages above | Viewer server; browser distribution bundled with cadgen |
-| Model sources | `models/src/` | Python geometry and dimension constants |
-| Exports | `models/STEP/`, `models/STL/`, `models/GLB/` | Generated files consumed by the viewer |
+| Model sources | `models/<model>/src/`, shared code in `models/lib/` | Python geometry and dimension constants |
+| text-to-cad examples | `models/f1/`, `models/hypercar/`, ... (see `models/EXAMPLES.md`) | Upstream example projects, source-only until built |
+| Exports | `STEP/`, `STL/`, `GLB/` under each `models/<model>/` | Generated files consumed by the viewer |
 | Report definitions | `reports/` | YAML report content, views, dimension bindings and materials |
 | Report outputs | `output/pdf/` | Generated PDF and provenance JSON |
 
@@ -39,7 +40,7 @@ python3 -m venv .venv
 ```
 
 `tools/patch_cadgen_windows.py` is a Windows-only workaround for visible worker
-consoles. It validates and patches four known launch sites in cadgen 0.7.10 and
+consoles. It validates and patches four known launch sites in cadgen 0.7.19 and
 is safe to rerun. It deliberately refuses a different cadgen version until those
 launch sites are reviewed. Reinstalling cadgen replaces the patched package
 files, so run it again afterwards. On Linux it does nothing.

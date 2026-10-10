@@ -2,11 +2,11 @@
 
     .venv\\Scripts\\python integrations\\solidworks\\solidworks_build.py MODEL [--parts NAME ...] [--out DIR]
 
-Geometry comes from the model's parts() recipes in models/src (the same numbers the STEP export
+Geometry comes from the model's parts() recipes in models/<model>/src (the same numbers the STEP export
 uses). Revolved profiles are sketches "<Feature>Profile" whose vertex i is driven by dimensions
 x<i>/r<i> (mm from the origin); blade/pin rows are one feature + a circular pattern whose count is
 the global variable "<Feature>_count". Edit them with integrations/solidworks/solidworks_edit.py.
-Output: models/SolidWorks/<model>/. SolidWorks must be open.
+Output: models/<model>/SolidWorks/. SolidWorks must be open.
 """
 import argparse
 import importlib
@@ -14,19 +14,21 @@ import pathlib
 import sys
 import time
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "models" / "src"))
+MODELS = pathlib.Path(__file__).resolve().parents[2] / "models"
+sys.path.insert(0, str(MODELS))  # the shared lib/
 
 from solidworks_api import PartBuilder, build_assembly, connect, no_dimension_prompts, open_docs  # noqa: E402
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("model", help="model script name in models/src, e.g. turbofan")
+    ap.add_argument("model", help="model folder name in models/, e.g. ge_e3_turbofan")
     ap.add_argument("--parts", nargs="+", help="build only these parts (no assembly)")
     ap.add_argument("--out", type=pathlib.Path)
     args = ap.parse_args()
-    out = (args.out or pathlib.Path("models/SolidWorks") / args.model).resolve()
+    out = (args.out or MODELS / args.model / "SolidWorks").resolve()
     out.mkdir(parents=True, exist_ok=True)
+    sys.path.insert(0, str(MODELS / args.model / "src"))
     recipes = importlib.import_module(args.model).parts()  # model data only; nothing is built on import
     if args.parts:
         recipes = [r for r in recipes if r[0] in args.parts]

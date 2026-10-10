@@ -6,17 +6,20 @@ and pushed into SolidWorks, Fusion or Onshape.
 
 | Model | Source script | What it is | Basis |
 |---|---|---|---|
-| Turbofan | `models/src/ge_e3_turbofan.py` | GE/NASA Energy Efficient Engine (E3): two-spool, long-duct mixed-flow turbofan, fan with 50 %-span shroud, 64 bypass OGVs, 18-lobe mixer, every core row at its design airfoil count; 12 parts | Dimensions and flowpath from the E3 NASA report, counts from the E3 component design reports (`profile_builder/Turbofan/`) |
-| Turbojet | `models/src/nasa_lewis_small_turbojet.py` | NASA Lewis small expendable turbojet: two-strut inlet with gearbox and front bearing, fuel control, welded 4-stage drum with lofted airfoils at the design counts, snout combustor with manifold, 12 nozzles and igniters, hollow mainshaft, one-piece 35-vane turbine stator, 57-blade rotor, strutted exhaust with rear bearing, convergent nozzle; 14 parts | Design report NASA TM X-3392: Figure 1 cross-section, airfoil tables (`profile_builder/Turbojet/`) |
-| Nuclear turbojet | `models/src/lyulka_nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, 13 parts | Layout from a period illustration, scaled to the AL-7 (`profile_builder/Nuclear_turbojet/`) |
-| Tsirkon | `models/src/tsirkon.py` | 3M22 Tsirkon (Zircon) cutaway: launch shroud, radome, seeker, electronics, payload placeholder, two solid motors (case, grain, igniter, nozzle), extended gas duct with fin actuators and bracing spokes, folding fins, raceways, jet vanes; 17 parts | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`profile_builder/Tsirkon/resources/`) |
-| Oreshnik | `models/src/oreshnik.py` | Oreshnik IRBM cutaway: nose fairing, six payload cones on a plate, post-boost stage layout, instrumentation compartment, two solid motors (case, grain, igniter, nozzle), aft skirt; 18 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m), with further references recorded in the source (`profile_builder/Oreshnik/resources/`) |
-| F-1 | `models/src/rocketdyne_f1.py` | Rocketdyne F-1 (Saturn V S-IC) rocket engine: gimbal, hollow LOX dome, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to 10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator, valves, flat-topped LOX dome with ring manifold and elbow inlets, four high-pressure ducts, bolted flanges; 42 parts in 8 sub-assemblies | R-3896-1 technical manual Fig 2-22 envelope dimensions + performance data, heroicrelics section drawings (`profile_builder/F1/`) |
-| Ramjet | `models/src/naca_lewis_16in_ramjet.py` | NACA Lewis 16-inch ram jet (1951 altitude-wind-tunnel engine): translating spike, sharp-lip conical diffuser, three-strut centre body with pilot cup, four dual-arc fuel bars with 16 upstream nozzles, gutter-grid flame holder, water-cooled Ø16 in chamber, convergent nozzle, movable tail plug on two strut rings; 9 parts | NACA RM E51C16 Table I coordinates, Figures 1-3 and text; RM E52D08 (`profile_builder/Ramjet/`) |
+| Turbofan | `models/ge_e3_turbofan/src/ge_e3_turbofan.py` | GE/NASA Energy Efficient Engine (E3): two-spool, long-duct mixed-flow turbofan, fan with 50 %-span shroud, 64 bypass OGVs, 18-lobe mixer, every core row at its design airfoil count, each spool split into shaft and rotors, rounded nacelle lip, plug and HPT tie bolts; 18 parts in 4 sub-assemblies | Dimensions and flowpath from the E3 NASA report, counts from the E3 component design reports (`profile_builder/Turbofan/`) |
+| Turbojet | `models/nasa_lewis_small_turbojet/src/nasa_lewis_small_turbojet.py` | NASA Lewis small expendable turbojet: two-strut inlet with gearbox and front bearing, fuel control, welded 4-stage drum with lofted airfoils at the design counts, snout combustor with manifold, 12 nozzles and igniters, hollow mainshaft, one-piece 35-vane turbine stator, 57-blade rotor, strutted exhaust with rear bearing, convergent nozzle, bolted casing joints; 21 parts in 6 sub-assemblies | Design report NASA TM X-3392: Figure 1 cross-section, airfoil tables (`profile_builder/Turbojet/`) |
+| Nuclear turbojet | `models/lyulka_nuclear_turbojet/src/lyulka_nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, intake lip, flanged and bolted casing, duct, vessel and nozzle joints, vessel bands and control drive housings, spool split into shaft and rotors; 23 parts in 5 sub-assemblies | Layout from a period illustration, scaled to the AL-7 (`profile_builder/Nuclear_turbojet/`) |
+| Tsirkon | `models/tsirkon/src/tsirkon.py` | 3M22 Tsirkon (Zircon) cutaway: launch shroud, radome, seeker, electronics, payload placeholder, two solid motors (case, grain, igniter, nozzle), extended gas duct with fin actuators and bracing spokes, folding fins, raceways, jet vanes; 17 parts | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`profile_builder/Tsirkon/resources/`) |
+| Oreshnik | `models/oreshnik/src/oreshnik.py` | Oreshnik IRBM cutaway: nose fairing, six payload cones on a plate, post-boost stage layout, instrumentation compartment, two solid motors (case, grain, igniter, nozzle), aft skirt; 18 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m), with further references recorded in the source (`profile_builder/Oreshnik/resources/`) |
+| F-1 | `models/rocketdyne_f1/src/rocketdyne_f1.py` | Rocketdyne F-1 (Saturn V S-IC) rocket engine: gimbal, hollow LOX dome, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to 10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator, valves, flat-topped LOX dome with ring manifold and elbow inlets, four high-pressure ducts, bolted flanges; 42 parts in 8 sub-assemblies | R-3896-1 technical manual Fig 2-22 envelope dimensions + performance data, heroicrelics section drawings (`profile_builder/F1/`) |
+| Ramjet | `models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py` | NACA Lewis 16-inch ram jet (1951 altitude-wind-tunnel engine): translating spike, sharp-lip conical diffuser, three-strut centre body with pilot cup, four dual-arc fuel bars with 16 upstream nozzles, gutter-grid flame holder, water-cooled Ø16 in chamber with a copper cooling coil, convergent nozzle, movable tail plug on two strut rings, five bolted flange joints; 15 parts in 4 sub-assemblies | NACA RM E51C16 Table I coordinates, Figures 1-3 and text; RM E52D08 (`profile_builder/Ramjet/`) |
+| Raptor 1 | `models/spacex_raptor_1/src/spacex_raptor_1.py` | SpaceX Raptor 1 sea-level engine: mount plate and gimbal block on a thrust frame, oxygen pump and preburner on the chamber axis, Ø870 hot-gas manifold disc on the main injector, methane turbopump under the disc beside the chamber (turbine, preburner, pump, inlet duct), jacketed chamber with a coolant collector, heat-tinted throat, coolant manifold just below it fed by a duct wrapped around the chamber, short wide bell, swept ducts, seven small lines, two engine controllers with wiring, valves with actuators, torch igniter, sensor ports, bolted flanges throughout; 36 parts in 5 sub-assemblies | Published envelope (3.1 m long, Ø1.3 m exit, 34.34:1 expansion); stations and diameters of the main masses read from SpaceX photographs at about ±5 % (`profile_builder/Raptor/`); the rest is assumed (`models/lib/raptor.py`) |
+| Raptor 2 | `models/spacex_raptor_2/src/spacex_raptor_2.py` | The same layout simplified: oxygen inlet bellows on the axis, wider throat, welded preburners, three small lines, one engine controller with wiring, green-grey oxidised bell, no igniter or sensor ports; 30 parts in 5 sub-assemblies | As Raptor 1; throat scaled from thrust over chamber pressure |
+| Raptor 3 | `models/spacex_raptor_3/src/spacex_raptor_3.py` | The integrated engine: flanged oxygen inlet studded onto smooth dark welded housings, housing bosses, methane pump dropping straight onto the coolant manifold, one thin service line, bare dark bell, no visible valves or oxygen line; 21 parts in 5 sub-assemblies | As Raptor 1; throat scaled from thrust over chamber pressure |
 
 All engine models are display/study models: the envelope and flowpath follow the sources, but airfoils
 (flat or elliptical sections) and internal structure are simplified. Blade counts are the published design
-counts for the turbojet and turbofan and assumed for the nuclear turbojet. Units are mm (the F-1 and ramjet
+counts for the turbojet and turbofan and assumed for the nuclear turbojet. The three Raptor models share one layout: their overall size is from published figures and their main proportions from photographs, the rest is assumed. Units are mm (the F-1 and ramjet
 are written in inches, as their sources are, and scaled once); the engine axis is +X.
 
 ## Setup
@@ -27,7 +30,7 @@ Commands are shown in Windows PowerShell. On Ubuntu, use `.venv/bin/python` in p
 `.venv\Scripts\python` and forward slashes in paths, and run `./open_cad_viewer.sh` in place
 of `Open CAD Viewer.cmd`. See [Ubuntu setup](docs/ubuntu.md) for what does and does not work there.
 
-The engine and bundled CAD Viewer are pinned to text-to-cad/cadgen 0.7.10.
+The engine and bundled CAD Viewer are pinned to text-to-cad/cadgen 0.7.19.
 Model dimensions and geometry recipes currently live in Python; see
 [model specification format](docs/model-specs.md) for the proposed YAML data
 format, material/mass handling and cache-aware migration approach.
@@ -63,31 +66,41 @@ On Ubuntu, see [Ubuntu setup](docs/ubuntu.md). The pinned engine does not instal
 One script per model is the single source of truth. Running it writes every declared format together:
 
 ```powershell
-.venv\Scripts\python models\src\ge_e3_turbofan.py    # -> models/STEP, models/STL, models/GLB (~15 min)
-.venv\Scripts\python models\src\nasa_lewis_small_turbojet.py
-.venv\Scripts\python models\src\naca_lewis_16in_ramjet.py
-.venv\Scripts\python models\src\lyulka_nuclear_turbojet.py
-.venv\Scripts\python models\src\tsirkon.py
-.venv\Scripts\python models\src\oreshnik.py
-.venv\Scripts\python models\src\rocketdyne_f1.py
+.venv\Scripts\python models\ge_e3_turbofan\src\ge_e3_turbofan.py    # -> STEP/, STL/, GLB/ beside its src/ (~15 min)
+.venv\Scripts\python models\nasa_lewis_small_turbojet\src\nasa_lewis_small_turbojet.py
+.venv\Scripts\python models\naca_lewis_16in_ramjet\src\naca_lewis_16in_ramjet.py
+.venv\Scripts\python models\lyulka_nuclear_turbojet\src\lyulka_nuclear_turbojet.py
+.venv\Scripts\python models\tsirkon\src\tsirkon.py
+.venv\Scripts\python models\oreshnik\src\oreshnik.py
+.venv\Scripts\python models\rocketdyne_f1\src\rocketdyne_f1.py
+.venv\Scripts\python models\spacex_raptor_1\src\spacex_raptor_1.py
+.venv\Scripts\python models\spacex_raptor_2\src\spacex_raptor_2.py
+.venv\Scripts\python models\spacex_raptor_3\src\spacex_raptor_3.py
 ```
 
-Outputs are cached by cadgen and only rebuilt when the script (or `models/src/lib/`) changes; add
+Outputs are cached by cadgen and only rebuilt when the script (or `models/lib/`) changes; add
 `--force` to rebuild anyway. Generated files are git-ignored; rebuild them after cloning.
 
 ```
 models/
-  src/            model scripts (edit these)
-  src/lib/        shared factories: revolve profiles, blade rows, clearances (shapes.py)
-  STEP/ STL/ GLB/ generated exports
-  SolidWorks/     generated: <model>/ (solidworks_build.py), imported/<model>/ (solidworks_import.py)
+  lib/              shared factories: revolve profiles, blade rows, clearances (shapes.py)
+  <model>/
+    src/            the model script, <model>.py (edit this)
+    STEP/ STL/ GLB/ generated exports
+    FreeCAD/        generated: <model>.FCStd (freecad_build.py)
+    SolidWorks/     generated: native parts (solidworks_build.py), imported/ (solidworks_import.py)
 integrations/     solidworks/ (native builder, editor, verify, STEP import), freecad/, fusion/, onshape/
 profile_builder/  gitignored reference material per model (source reports, digitized figures, notes)
 ```
 
+`models/` also holds the text-to-cad example projects (`f1`, `f14d`, `hypercar`, `falcon_heavy`, `tendon_hand`
+and others; MIT, see `models/LICENSE-text-to-cad`), catalogued in `models/EXAMPLES.md`. They have the same
+folder shape with their own `src/lib/` and are source-only until built: run a project's `src/*.py` to
+generate its exports. The rest of the upstream clone stays in git-ignored `vendor/text-to-cad`.
+
 Tunable dimensions sit as constants and tables at the top of each script (gas-path radii, stage
 positions, blade counts, clearances). Each script's `parts()` returns one recipe per part: a list
-of named ops (revolve, offset revolve, offset ring, spline, cut, blade ring, pins, loft, duct, fins, pipe; see `lib/shapes.py`; missile helpers: shells, ogives, solid motors in `lib/rocket.py`). cadgen builds the
+of named ops (revolve, offset revolve, offset ring, spline, cut, blade ring, pins, loft, duct, fins, pipe, sweep; see `lib/shapes.py`; missile helpers: shells, ogives, solid motors in `lib/rocket.py`). cadgen builds the
 STEP/STL/GLB from the recipes and `integrations/solidworks/solidworks_build.py` builds the same recipes as native
 SolidWorks features. Blade rows come from `stage()`, which sizes tips and roots so flat blade
 corners never cut into the casing.
@@ -115,19 +128,23 @@ is expected to have:
 Check the saved STEP after every build. Every part must be a valid solid and no two parts may intersect:
 
 ```powershell
-.venv\Scripts\python tools\model_check.py models\STEP\rocketdyne_f1.step
+.venv\Scripts\python tools\model_check.py models\rocketdyne_f1\STEP\rocketdyne_f1.step
 ```
 
 Where the model builds in FreeCAD, run `integrations\freecad\freecad_build.py <model>` as well; that
 comparison has caught a part the kernel silently dropped. Review a snapshot in the Render display
 with the floor moved off the axis (`--display '{"mode":"render","floor":{"placement":"lowest"}}'`).
-`lathe`, `hex_circle` and `pin_circle` build in cadgen and FreeCAD; the SolidWorks builder does not
+`lathe`, `hex_circle`, `pin_circle` and `sweep` (a round duct with real bends) build in cadgen and FreeCAD; the SolidWorks builder does not
 have them, so bring such a model into SolidWorks with `solidworks_import.py`.
 
 `reports\latex\model_fidelity.py` writes `output/pdf/model_fidelity.pdf`, which measures each model
 against its previous commit (parts, fasteners, rounded profiles, finishes, file sizes). Status: the
-F-1 meets the standard (42 parts in 8 sub-assemblies, 574 fasteners, 11 finishes); the other six
-models do not yet.
+F-1 (42 parts in 8 sub-assemblies, 574 fasteners), the ramjet (15 parts, 240 fasteners), the turbojet
+(21 parts, 144 fasteners), the turbofan (18 parts, 84 fasteners), the nuclear turbojet (23 parts, 600
+fasteners) and the three Raptors (36, 30 and 21 parts; 272, 172 and 68 fasteners) meet the standard;
+Tsirkon and Oreshnik do not yet. The report covers the seven models that existed at its baseline
+commit, not the Raptors. All of these use `lathe` and bolt-circle ops, so `solidworks_build.py` stops
+at them; the nuclear turbojet's earlier native SolidWorks files predate its upgrade.
 
 ## View
 
@@ -144,9 +161,9 @@ models do not yet.
   Settings provide clipping/sections and display presets.
 - **PyVista** (desktop window, local OpenGL):
   ```powershell
-  .venv\Scripts\python -c "import pyvista as pv; p = pv.Plotter(); p.import_gltf('models/GLB/ge_e3_turbofan.glb'); p.show()"
+  .venv\Scripts\python -c "import pyvista as pv; p = pv.Plotter(); p.import_gltf('models/ge_e3_turbofan/GLB/ge_e3_turbofan.glb'); p.show()"
   ```
-- **Snapshot to PNG**: `cd models; ..\.venv\Scripts\python -m cadgen.cli step snapshot STEP/nasa_lewis_small_turbojet.step ../tmp/view.png [--mode section] [--camera 200:15]`
+- **Snapshot to PNG**: `cd models; ..\.venv\Scripts\python -m cadgen.cli step snapshot nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step ../tmp/view.png [--mode section] [--camera 200:15]`
 
 See [local installation and update notes](docs/local-installation.md) for the
 engine and viewer locations. For a full export-access check:
@@ -162,17 +179,17 @@ non-parametric (dumb-solid) import. Edit the script, rebuild, re-import.
 
 | Script | Platform | How it connects | Status |
 |---|---|---|---|
-| `integrations/solidworks/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/SolidWorks/imported/<name>/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
+| `integrations/solidworks/solidworks_import.py` | SolidWorks (Windows) | COM API via pywin32; imports STEP, saves `.SLDASM` + one `.SLDPRT` per part to `models/<name>/SolidWorks/imported/` | Tested with SOLIDWORKS 2026 SP3 (3DEXPERIENCE): all three engines import and save; the reopened ramjet assembly resolves all 6 parts from the output folder |
 | `integrations/fusion/` | Autodesk Fusion | Fusion script (runs inside Fusion only): file picker, imports each STEP into a new design | Not tested (Fusion not installed here) |
 | `integrations/onshape/onshape_import.py` | Onshape | REST API (`/translations`), API-key basic auth; creates or reuses a document | Not tested (needs API keys) |
 
 ```powershell
 # SolidWorks: open SolidWorks and log in first (the 3DEXPERIENCE edition cannot be started over COM)
-.venv\Scripts\python integrations\solidworks\solidworks_import.py models\STEP\ge_e3_turbofan.step [more.step ...] [--close] [--out DIR]
+.venv\Scripts\python integrations\solidworks\solidworks_import.py models\ge_e3_turbofan\STEP\ge_e3_turbofan.step [more.step ...] [--close] [--out DIR]
 
 # Onshape: keys from https://dev-portal.onshape.com/keys
 $env:ONSHAPE_ACCESS_KEY = "..."; $env:ONSHAPE_SECRET_KEY = "..."
-.venv\Scripts\python integrations\onshape\onshape_import.py models\STEP\ge_e3_turbofan.step [--document <id>] [--flatten]
+.venv\Scripts\python integrations\onshape\onshape_import.py models\ge_e3_turbofan\STEP\ge_e3_turbofan.step [--document <id>] [--flatten]
 ```
 
 Fusion: Utilities > Scripts and Add-Ins > "+" > Script from my computer > pick
@@ -194,16 +211,16 @@ tree: fully defined sketches, named dimensions, circular patterns driven by glob
 No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ```powershell
-# build a model as native parts + assembly -> models/SolidWorks/<model>/
-.venv\Scripts\python integrations\solidworks\solidworks_build.py MODEL [--parts fan nacelle]   # MODEL = script name in models/src
+# build a model as native parts + assembly -> models/<model>/SolidWorks/
+.venv\Scripts\python integrations\solidworks\solidworks_build.py MODEL [--parts fan nacelle]   # MODEL = folder name in models/
 
-# check the native parts against the cadgen STEP (needs models/STEP/<model>.step)
+# check the native parts against the cadgen STEP (needs models/<model>/STEP/<model>.step)
 .venv\Scripts\python integrations\solidworks\solidworks_verify.py ge_e3_turbofan
 
 # inspect and edit any .SLDPRT/.SLDASM (rebuilds, refuses to save on rebuild errors)
-.venv\Scripts\python integrations\solidworks\solidworks_edit.py list models\SolidWorks\lyulka_nuclear_turbojet\nose_cone.SLDPRT
-.venv\Scripts\python integrations\solidworks\solidworks_edit.py set  models\SolidWorks\lyulka_nuclear_turbojet\nose_cone.SLDPRT InletStruts_count=6 r2@NoseBodyProfile=250
-.venv\Scripts\python integrations\solidworks\solidworks_edit.py suppress models\SolidWorks\lyulka_nuclear_turbojet\nose_cone.SLDPRT InletStruts
+.venv\Scripts\python integrations\solidworks\solidworks_edit.py list models\lyulka_nuclear_turbojet\SolidWorks\nose_cone.SLDPRT
+.venv\Scripts\python integrations\solidworks\solidworks_edit.py set  models\lyulka_nuclear_turbojet\SolidWorks\nose_cone.SLDPRT InletStruts_count=6 r2@NoseBodyProfile=250
+.venv\Scripts\python integrations\solidworks\solidworks_edit.py suppress models\lyulka_nuclear_turbojet\SolidWorks\nose_cone.SLDPRT InletStruts
 ```
 
 - Feature tree per recipe op: revolves/cuts/splines are `<Name>Profile` sketches with every
@@ -228,7 +245,7 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 ## Native parametric FreeCAD
 
 `integrations/freecad/freecad_build.py` builds the same recipes as a parametric FreeCAD document
-(`models/FreeCAD/<model>.FCStd`, git-ignored) and checks every part against the cadgen STEP:
+(`models/<model>/FreeCAD/<model>.FCStd`, git-ignored) and checks every part against the cadgen STEP:
 
 ```powershell
 .venv\Scripts\python integrations\freecad\freecad_build.py tsirkon          # add --no-verify to skip the check
@@ -252,7 +269,7 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
 
 ## Recommended workflow
 
-1. **Develop in build123d** (`models/src/*.py`): layout, proportions, clearances, stage counts.
+1. **Develop in build123d** (`models/<model>/src/<model>.py`): layout, proportions, clearances, stage counts.
    Fast iteration, diffable in git, checked with the viewer and `read_step`. Get it ~90 % there.
 2. **Freeze and hand over to SolidWorks natively** (`solidworks_build.py`) rather than as STEP, so the
    SolidWorks model has editable dimensions instead of dumb solids.
@@ -272,7 +289,7 @@ section) so the whole assembly can be reviewed at a glance, and optionally score
 silhouette against a reference picture:
 
 ```powershell
-.venv\Scripts\python tools\render_check.py models\STEP\tsirkon.step --hide launch_shroud `
+.venv\Scripts\python tools\render_check.py models\tsirkon\STEP\tsirkon.step --hide launch_shroud `
     --ref profile_builder\Tsirkon\resources\article\fig03.jpeg --ref-box 280,185,380,1055 --ref-rotate 90 --ref-tol 15 --length 8500
 ```
 
@@ -308,7 +325,7 @@ Checks run with `read_step` on the saved STEP files (rerun with the snippet belo
 
 ```python
 from cadgen import read_step
-parts = {c.label: c for c in read_step("models/STEP/nasa_lewis_small_turbojet.step").leaves}
+parts = {c.label: c for c in read_step("models/nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step").leaves}
 print(parts["rotor"].distance_to(parts["compressor_casing"]))   # clearance, mm
 print(parts["rotor"] & parts["compressor_casing"])              # None = no interference
 ```
@@ -322,7 +339,7 @@ confirm a zero with the intersection check above.
   open a console window. Local fix: `CREATE_NO_WINDOW` added to the four `subprocess.Popen` calls in
   `.venv/Lib/site-packages/cadgen/daemon/{pool,executors,artifacts,housekeeping}.py`.
   Run `.venv\Scripts\python tools\patch_cadgen_windows.py` after reinstalling cadgen;
-  the helper validates the 0.7.10 launch sites and preserves this local fix.
+  the helper validates the 0.7.19 launch sites and preserves this local fix.
 - The turbofan build takes ~15 min and its STEP is ~80 MB (≈3,300 airfoil solids at the design counts).
 - **Twisted lofts**: a loft between two ellipses has no defined start point, so with twist the
   kernels pair the wrong points (OpenCascade pinched the old fan blades to ~0.9 L, SolidWorks

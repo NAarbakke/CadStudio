@@ -6,13 +6,13 @@
 made portable, but `pip install -r requirements.txt` fails on Linux because of
 one dependency:
 
-- `cadgen[snapshot]==0.7.10` requires `cadquery-ocp-novtk>=7.9,<8` (the
+- `cadgen==0.7.19` requires `cadquery-ocp-novtk>=7.9,<8` (the
   OpenCascade bindings).
 - `cadquery-ocp-novtk` 7.9.x is published with Windows wheels only. Checked on
   PyPI for `linux_x86_64`, `manylinux2014`, `manylinux_2_17`, `manylinux_2_28`
   and `manylinux_2_27` for Python 3.11, 3.12 and 3.13: no 7.9 file exists.
 - Linux only has 8.0.1.x, which cadgen excludes.
-- Newer cadgen releases (0.7.12, 0.7.17) have the same `<8` requirement.
+- Earlier releases checked (0.7.10, 0.7.12, 0.7.17) have the same `<8` requirement.
 
 Options, none tested yet:
 
@@ -61,7 +61,7 @@ python3 -m venv .venv
 Build and view:
 
 ```bash
-.venv/bin/python models/src/naca_lewis_16in_ramjet.py
+.venv/bin/python models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py
 .venv/bin/python tools/engineering_report.py reports/naca_lewis_16in_ramjet.yaml
 ./open_cad_viewer.sh
 ```

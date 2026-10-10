@@ -1,6 +1,6 @@
 # CAD Viewer
 
-CAD Viewer is the browser application bundled with `cadgen==0.7.10` in the
+CAD Viewer is the browser application bundled with `cadgen==0.7.19` in the
 project `.venv`. Its server runs on the computer it was started on and serves
 `models/`. A localhost link works on that computer while the server is running.
 
@@ -22,27 +22,27 @@ Ubuntu: run `./open_cad_viewer.sh` from the project root.
 ```
 
 The launcher finds or starts a detached viewer with `models/` as its working
-directory. It checks the returned server root before printing its URL.
+directory. It checks the folder the server was started in before printing its URL.
 `--open` opens the system browser; omit it to print links only. It works from
 any working directory when the script is invoked by its absolute path.
 No model build is run by this launcher.
 
-Use **Show files** at the top left, expand **STEP**, then select a filename.
+Use **Show files** at the top left, expand the model's folder and its **STEP** folder, then select a filename.
 The file name and browser URL should change. Wait for **Reading model** and
 **Loading geometry** to finish. The turbofan and turbojet contain thousands
 of airfoil faces and can take longer on a cold browser/cache.
 
-| Model source stem | STEP file under the served directory |
+| Model source stem | STEP file under `models/` |
 |---|---|
-| `rocketdyne_f1` | `STEP/rocketdyne_f1.step` |
-| `naca_lewis_16in_ramjet` | `STEP/naca_lewis_16in_ramjet.step` |
-| `lyulka_nuclear_turbojet` | `STEP/lyulka_nuclear_turbojet.step` |
-| `oreshnik` | `STEP/oreshnik.step` |
-| `tsirkon` | `STEP/tsirkon.step` |
-| `ge_e3_turbofan` | `STEP/ge_e3_turbofan.step` |
-| `nasa_lewis_small_turbojet` | `STEP/nasa_lewis_small_turbojet.step` |
+| `rocketdyne_f1` | `rocketdyne_f1/STEP/rocketdyne_f1.step` |
+| `naca_lewis_16in_ramjet` | `naca_lewis_16in_ramjet/STEP/naca_lewis_16in_ramjet.step` |
+| `lyulka_nuclear_turbojet` | `lyulka_nuclear_turbojet/STEP/lyulka_nuclear_turbojet.step` |
+| `oreshnik` | `oreshnik/STEP/oreshnik.step` |
+| `tsirkon` | `tsirkon/STEP/tsirkon.step` |
+| `ge_e3_turbofan` | `ge_e3_turbofan/STEP/ge_e3_turbofan.step` |
+| `nasa_lewis_small_turbojet` | `nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step` |
 
-For a visual-only mesh export, use the GLB folder or:
+For a visual-only mesh export, use the model's GLB folder or:
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py ge_e3_turbofan --format GLB --open
@@ -111,10 +111,10 @@ fails. Browser appearance still needs a visual check.
 
 - **Site cannot be reached / connection refused:** run the launcher and use
   its returned link. The previous server may have stopped or its port changed.
-- **Empty file list:** check the printed `Serving:` path is this project's
-  `models` directory, and expand the STEP folder in the panel.
-- **Missing export:** run `.venv\Scripts\python models\src\<model>.py` (Windows) or
-  `.venv/bin/python models/src/<model>.py` (Ubuntu).
+- **Empty file list:** check the printed `Started in:` path is this project's
+  `models` directory, and expand the model's STEP folder in the panel.
+- **Missing export:** run `.venv\Scripts\python models\<model>\src\<model>.py` (Windows) or
+  `.venv/bin/python models/<model>/src/<model>.py` (Ubuntu).
   Outputs are ignored by Git and must be rebuilt after a fresh clone.
 - **Compilation error:** retain the reported error and the launcher's server
   log location. Inspect it before forcing a rebuild or removing caches.

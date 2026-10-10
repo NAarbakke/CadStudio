@@ -24,6 +24,11 @@ Axis = +X from the gimbal centre toward the nozzle exit (flow direction); the tu
 """
 from math import cos, radians, sin
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the shared lib/
+
 from cadgen import glb, step, stl
 from lib.materials import colour, materials
 from lib.shapes import assemble, flange_bolts, interp, segment

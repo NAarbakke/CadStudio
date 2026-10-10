@@ -17,7 +17,9 @@ MODELS = ROOT / "models"
 
 
 def request(url, *, post=False, binary=False):
-    req = Request(url, data=b"" if post else None)
+    # The viewer refuses a POST without its guard header (cross-site POST block).
+    req = Request(url, data=b"" if post else None,
+                  headers={"x-cadgen-viewer": "1"} if post else {})
     with urlopen(req, timeout=60) as response:
         data = response.read()
     return data if binary else json.loads(data)
@@ -46,8 +48,10 @@ def start(port=None):
         raise RuntimeError("Viewer returned no URL: " + result.stdout)
     url = announcements[-1]["url"].rstrip("/")
     info = request(url + "/__cad/server")
-    if Path(info["rootPath"]).resolve() != MODELS.resolve():
-        raise RuntimeError(f"Viewer serves {info['rootPath']}, expected {MODELS}")
+    # A reused viewer keeps the folder it was started in; relative ?file= links
+    # resolve against it, so it has to be this project's models/.
+    if Path(info["start"]).resolve() != MODELS.resolve():
+        raise RuntimeError(f"Viewer was started in {info['start']}, expected {MODELS}")
     return url, info
 
 
@@ -60,7 +64,9 @@ def store_url(url, ref, asset):
 
 
 def check_step(url, relative, timeout):
-    endpoint = url + "/__cad/artifact?" + urlencode({"file": relative})
+    # The viewer takes absolute paths only.
+    file = (MODELS / relative).as_posix()
+    endpoint = url + "/__cad/artifact?" + urlencode({"file": file})
     status = request(endpoint)
     if status["state"] == "not-compiled" and status.get("compile"):
         print(f"Compiling viewer cache: {relative}", flush=True)
@@ -72,15 +78,20 @@ def check_step(url, relative, timeout):
             raise RuntimeError(f"Viewer cache still compiling after {timeout}s")
         time.sleep(1)
         status = request(endpoint)
-    if status["state"] != "compiled" or not status.get("ref"):
+    if status["state"] != "compiled":
         raise RuntimeError(json.dumps(status))
-    assembly = request(store_url(url, status["ref"], "assembly.json"))
+    # The compiled tree is named by the file's catalog row.
+    entries = request(url + "/__cad/catalog?" + urlencode({"file": file}))["entries"]
+    if not entries or not entries[0].get("url"):
+        raise RuntimeError("Compiled, but the viewer catalog has no entry for it")
+    ref = entries[0]["url"]
+    assembly = request(store_url(url, ref, "assembly.json"))
     components = assembly.get("components", {})
     if not components:
         raise RuntimeError("Assembly has no components")
     for component in components.values():
         asset = component.get("brep") or component.get("mesh")
-        if asset and not request(store_url(url, status["ref"], asset), binary=True):
+        if asset and not request(store_url(url, ref, asset), binary=True):
             raise RuntimeError(f"Empty component asset: {asset}")
     leaves = assembly["assembly"]["root"]["leafPartIds"]
     return len(leaves) if isinstance(leaves, list) else 1
@@ -95,24 +106,28 @@ def main():
     parser.add_argument("--port", type=int, help="Require this port; otherwise reuse/choose a free port")
     parser.add_argument("--compile-timeout", type=int, default=1200)
     args = parser.parse_args()
-    sources = sorted((MODELS / "src").glob("*.py"))
-    stems = {path.stem for path in sources}
+    # A model is a folder models/<stem>/ whose src/ holds <stem>.py.
+    stems = {path.parent.parent.name for path in MODELS.glob("*/src/*.py")
+             if path.stem == path.parent.parent.name}
     if args.model is not None and args.model not in stems:
         parser.error("Unknown model. Choose: " + ", ".join(sorted(stems)))
     relative = None
     if args.model:
-        relative = f"{args.format}/{args.model}.{args.format.lower()}"
+        relative = f"{args.model}/{args.format}/{args.model}.{args.format.lower()}"
         if not (MODELS / relative).is_file():
-            parser.error(f"Missing {relative}. Build models/src/{args.model}.py first.")
+            parser.error(f"Missing {relative}. Build models/{args.model}/src/{args.model}.py first.")
     url, info = start(args.port)
-    print(f"CAD Viewer {info['viewerVersion']}: {url}/", flush=True)
-    print(f"Serving: {info['rootPath']}", flush=True)
+    print(f"CAD Viewer {info['identityToken'].split(':')[0]}: {url}/", flush=True)
+    print(f"Started in: {info['start']}", flush=True)
     failures = []
     checks = {}
     if args.check_all:
         for stem in sorted(stems):
+            if not any((MODELS / stem / fmt).is_dir() for fmt in ("STEP", "GLB", "STL")):
+                print(f"SKIPPED {stem}: never built", flush=True)
+                continue
             for fmt in ("STEP", "GLB", "STL"):
-                ref = f"{fmt}/{stem}.{fmt.lower()}"
+                ref = f"{stem}/{fmt}/{stem}.{fmt.lower()}"
                 try:
                     if not (MODELS / ref).is_file():
                         raise RuntimeError("Export missing; run the model source first")
@@ -121,8 +136,6 @@ def main():
                         checks[ref] = {"ok": True, "parts": count}
                         print(f"OK {ref}: {count} parts, assembly and component assets readable", flush=True)
                     else:
-                        # The viewer asset route requires an absolute contained
-                        # file; artifact status accepts root-relative paths.
                         data = request(url + "/__cad/asset?" + urlencode({"file": str(MODELS / ref)}), binary=True)
                         if not data:
                             raise RuntimeError("Export is empty")
@@ -135,7 +148,7 @@ def main():
     target = url + "/" + ("?file=" + quote(relative, safe="") if relative else "")
     state = {"checked_at": datetime.now(timezone.utc).isoformat(),
              "url": target, "server": info, "checks": checks,
-             "model_urls": {stem: url + "/?file=" + quote(f"STEP/{stem}.step", safe="")
+             "model_urls": {stem: url + "/?file=" + quote(f"{stem}/STEP/{stem}.step", safe="")
                             for stem in sorted(stems)}}
     state_path = ROOT / "tmp" / "viewer" / "session.json"
     state_path.parent.mkdir(parents=True, exist_ok=True)

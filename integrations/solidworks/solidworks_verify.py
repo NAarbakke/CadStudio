@@ -1,10 +1,10 @@
 """Check native SolidWorks parts against the cadgen STEP export of the same model.
 
-    .venv\\Scripts\\python integrations\\solidworks\\solidworks_verify.py nasa_lewis_small_turbojet [--dir models/SolidWorks/nasa_lewis_small_turbojet] [--parts ...]
+    .venv\\Scripts\\python integrations\\solidworks\\solidworks_verify.py nasa_lewis_small_turbojet [--dir models/nasa_lewis_small_turbojet/SolidWorks] [--parts ...]
 
 Per part: rebuild errors, sketch status (all must be fully defined), and the geometry itself: the
 part is exported to STEP and compared with the cadgen part (volume, and volume of the overlap, so a
-misplaced or flipped feature fails even when its volume is right). Needs models/STEP/<model>.step.
+misplaced or flipped feature fails even when its volume is right). Needs models/<model>/STEP/<model>.step.
 """
 import argparse
 import importlib
@@ -29,9 +29,10 @@ def main():
     ap.add_argument("--dir", type=pathlib.Path)
     ap.add_argument("--parts", nargs="+")
     args = ap.parse_args()
-    folder = args.dir or pathlib.Path("models/SolidWorks") / args.model
-    reference = {c.label: c for c in read_step(f"models/STEP/{args.model}.step").leaves}
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "models" / "src"))
+    models = pathlib.Path(__file__).resolve().parents[2] / "models"
+    folder = args.dir or models / args.model / "SolidWorks"
+    reference = {c.label: c for c in read_step(str(models / args.model / "STEP" / f"{args.model}.step")).leaves}
+    sys.path[:0] = [str(models / args.model / "src"), str(models)]
     lofted = {name for name, _, ops in importlib.import_module(args.model).parts() if any(op[0] in ("loft", "duct") for op in ops)}
     sw = connect()
     tmp = pathlib.Path(tempfile.mkdtemp())
