@@ -1,8 +1,6 @@
 .venv/
 __pycache__/
 tmp/
-profile_builder/
 inspo/
-vendor/
 
-# models/.gitignore keeps each model's generated STEP, STL, GLB, FreeCAD and SolidWorks folders out of git
+# models/.gitignore keeps each model's generated STEP, STL, GLB, FreeCAD, SolidWorks, reports and profile folders out of git

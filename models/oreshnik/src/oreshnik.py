@@ -1,6 +1,6 @@
 """Oreshnik IRBM: cutaway display model, as reconstructed from open sources.
 
-Sources (profile_builder/Oreshnik/, see its README.md):
+Sources (models/oreshnik/profile/, see its README.md):
   - Luftlage, "The missile that came in from the cold" (2026), article/:
     fig01 reconstruction (~13 m, Ø1.61 m, two solid stages derived from the Yars 2nd/3rd stages),
     stations read from its side view at 12.23 mm/px (13 m over the 1063 px drawn, tip at px 1298);

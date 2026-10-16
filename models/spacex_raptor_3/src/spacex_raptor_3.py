@@ -4,7 +4,7 @@ The third generation: secondary flow circuits, sensors and much of the plumbing 
 walls and the engine needs no heat shield. Shown as in the photograph: a flanged oxygen inlet studded onto
 smooth dark welded housings, the methane pump dropping straight into the coolant manifold, a bare dark
 nozzle, one thin service line, no visible valves, igniter or oxygen line.
-Sources (profile_builder/Raptor/; public figures and photographs, no drawings):
+Sources (models/spacex_raptor_1/profile/; public figures and photographs, no drawings):
   - Wikipedia "SpaceX Raptor": length 3.1 m, diameter 1.3 m, sea-level nozzle expansion ratio 34.34:1.
   - SpaceX photographs of Raptor 1, 2 and 3 (web/nse_img_1300-1302.jpg) and of a sea-level Raptor at
     Hawthorne: the stations and diameters of the main masses, read at about ±5 %.

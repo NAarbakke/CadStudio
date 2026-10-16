@@ -4,14 +4,14 @@ cadgen==0.7.19
 pywin32; sys_platform == "win32"
 # integrations/onshape/onshape_import.py
 requests
-# optional: standalone GLB rendering, PDF/figure tooling used for profile_builder/
+# optional: standalone GLB rendering, PDF/figure tooling used for each model's profile/ folder
 pyvista
 pymupdf
 pillow
 # Engineering PDF reports and declarative report manifests
 reportlab==4.4.10
 PyYAML==6.0.3
-# Optional LaTeX reports (tools/latex_report.py, reports/latex/); compiling also needs
+# Optional LaTeX reports (reports/latex_report.py); compiling also needs
 # latexmk and LuaLaTeX from TeX Live or MiKTeX, which pip cannot install
 Jinja2==3.1.6
 matplotlib

@@ -39,7 +39,7 @@ coordinate_system:
   geometry_length_unit: mm
 sources:
   naca_e51c16:
-    file: profile_builder/Ramjet/RM-E51C16_16in_ramjet_free_jet_1951.pdf
+    file: models/naca_lewis_16in_ramjet/profile/RM-E51C16_16in_ramjet_free_jet_1951.pdf
 dimensions:
   chamber_inside_diameter:
     value: 16.0
@@ -97,7 +97,7 @@ Before migrating a model, compare its old and new recipes and exported geometry,
 verify that editing YAML triggers a rebuild, and check native CAD imports use
 the same values. Keep the input YAML as the single source for migrated quantities.
 
-The engineering-report framework now uses `reports/<model>.yaml` for report
+The engineering-report framework now uses `models/<model>/reports/<model>.yaml` for report
 content, views, drawing callouts, source notes and optional material densities.
 These manifests document the model; they do not override geometry. Callouts may
 bind to named numeric Python constants, with explicit units, so values need not

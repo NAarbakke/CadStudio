@@ -6,8 +6,7 @@ project `.venv`. Its server runs on the computer it was started on and serves
 
 ## Open and select models
 
-Windows: double-click `Open CAD Viewer.cmd` in the project root, or run from PowerShell.
-Ubuntu: run `./open_cad_viewer.sh` from the project root.
+Run from the project root, in PowerShell on Windows or a shell on Ubuntu.
 
 ```powershell
 .venv\Scripts\python tools\start_viewer.py --open

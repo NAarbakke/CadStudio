@@ -5,6 +5,11 @@
 /*/GLB/*
 /*/FreeCAD/*
 /*/SolidWorks/*
+# Generated report PDFs (their .yaml, .py and .tex sources are tracked), and each model's reference material (source reports, figures, notes)
+/*/reports/*.pdf
+/*/reports/*_report.json
+/*/profile/
+/model_fidelity.pdf
 # Generated unified STEP sidecars are rebuilt from the model's Python declarations.
 *.step.json
 *.stp.json

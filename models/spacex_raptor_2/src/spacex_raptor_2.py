@@ -3,7 +3,7 @@
 The simplified second generation, shown with its oxygen inlet bellows on the axis, welded preburners, the
 pump discharge duct wrapped around the chamber, three small lines, one engine controller with its
 wiring, the green-grey oxidised nozzle of the photographs, and bolt circles only at the inlets, the manifold disc and the main injector.
-Sources (profile_builder/Raptor/; public figures and photographs, no drawings):
+Sources (models/spacex_raptor_1/profile/; public figures and photographs, no drawings):
   - Wikipedia "SpaceX Raptor": length 3.1 m, diameter 1.3 m, sea-level nozzle expansion ratio 34.34:1.
   - SpaceX photographs of Raptor 1, 2 and 3 (web/nse_img_1300-1302.jpg) and of a sea-level Raptor at
     Hawthorne: the stations and diameters of the main masses, read at about ±5 %.

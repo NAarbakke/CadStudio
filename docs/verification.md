@@ -45,10 +45,10 @@ code in `models/lib/`. All seven existing models were rebuilt from their new loc
 | `oreshnik.step` | 18 | OK after the four PBCS struts were moved aft of the PBV frame (they overlapped it by 97,703 mm3) |
 
 The Raptor models and the nuclear turbojet were reviewed as Render-display GLB snapshots
-(`tmp/check/<model>_render.png`). The Raptor layout was then reworked against the SpaceX photographs (`profile_builder/Raptor/README.md`) and rebuilt, then dressed with swept ducts (the new `sweep` op), small lines, controllers and wiring; the part counts above are the final models. The three Raptors were also built in FreeCAD
+(`tmp/check/<model>_render.png`). The Raptor layout was then reworked against the SpaceX photographs (`models/spacex_raptor_1/profile/README.md`) and rebuilt, then dressed with swept ducts (the new `sweep` op), small lines, controllers and wiring; the part counts above are the final models. The three Raptors were also built in FreeCAD
 (`integrations/freecad/freecad_build.py`): every part matches the cadgen part at 100.00 % overlap.
 The upgraded nuclear turbojet was not rebuilt in FreeCAD, and the fidelity report
-(`reports/latex/model_fidelity.py`) was not regenerated.
+(`reports/model_fidelity.py`) was not regenerated.
 
 `tools/start_viewer.py --check-all` read all 30 exports of the ten built models on viewer 0.7.19 and
 skipped the text-to-cad example projects, which have never been built.

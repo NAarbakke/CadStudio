@@ -9,10 +9,11 @@ project root, which is wherever the repository is cloned.
 | CAD engine | `.venv/Lib/site-packages/cadgen/` (Windows) or `.venv/lib/python3.*/site-packages/cadgen/` (Ubuntu) | cadgen 0.7.19, build123d/OpenCascade, exports and snapshots |
 | Browser viewer | `cadgen/viewer/` inside the site-packages above | Viewer server; browser distribution bundled with cadgen |
 | Model sources | `models/<model>/src/`, shared code in `models/lib/` | Python geometry and dimension constants |
-| text-to-cad examples | `models/f1/`, `models/hypercar/`, ... (see `models/EXAMPLES.md`) | Upstream example projects, source-only until built |
+| text-to-cad examples | `examples/f1/`, `examples/hypercar/`, ... (see `examples/README.md`) | Upstream example projects, source-only until built |
 | Exports | `STEP/`, `STL/`, `GLB/` under each `models/<model>/` | Generated files consumed by the viewer |
-| Report definitions | `reports/` | YAML report content, views, dimension bindings and materials |
-| Report outputs | `output/pdf/` | Generated PDF and provenance JSON |
+| Report generators | `reports/` | `engineering_report.py`, `latex_report.py`, the LaTeX class and the cross-model fidelity report |
+| Report definitions | `reports/` under each `models/<model>/` | YAML report content, LaTeX report script and template |
+| Report outputs | the same `models/<model>/reports/` folder | Generated PDF and provenance JSON (ignored by Git) |
 
 The Python package is the executable CAD engine. The viewer is bundled with the
 engine; there is no separate npm installation for it.

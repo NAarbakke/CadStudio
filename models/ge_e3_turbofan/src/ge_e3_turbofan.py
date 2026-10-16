@@ -1,12 +1,14 @@
 """GE/NASA Energy Efficient Engine (E3) flight propulsion system: two-spool, long-duct mixed-flow turbofan.
 
-Sources (see profile_builder/Turbofan/README.md):
-  - profile_builder/Turbofan/E3_energy_efficient_engine_1981.pdf, Table I: fan Ø2108 mm, max nacelle Ø2489 mm,
+Sources (see models/ge_e3_turbofan/profile/README.md):
+  - models/ge_e3_turbofan/profile/E3_energy_efficient_engine_1981.pdf, Table I: fan Ø2108 mm, max nacelle Ø2489 mm,
     inlet length from fan face 1590 mm, nacelle length 6033 mm, exhaust nozzle Ø1590 mm,
     turbomachinery length 3180 mm, 162.4 kN takeoff thrust.
   - Same report, Figure 2 (cross-section): 32-blade fan with quarter-stage booster, 10-stage
     23:1 HPC, double-annular combustor, 2-stage HPT, 5-stage LPT, lobed mixer, centre plug.
-  - E3 component design reports (profile_builder/Turbofan/): fan CR-165148 (part-span shrouds at 50 %
+  - Same report, Figure 20 (nacelle general arrangement): inlet, integral composite fan frame, hinged
+    cascade reverser around the core compartment, tailpipe; Table I: highlight / max diameter 0.86.
+  - E3 component design reports (models/ge_e3_turbofan/profile/): fan CR-165148 (part-span shrouds at 50 %
     span, 64 swept and leaned bypass OGVs, 56-blade quarter-stage rotor, chord 63.5-71.1 mm), HPC
     CR-165558 (airfoil counts per row; stators 2 and 5 read from a poor scan), HPT CR-167955 (46/76 and
     48/70 vanes/blades), LPT CR-167956 Figure 6 (nozzle/rotor counts per stage), FPS CR-168219 (mixer:
@@ -14,9 +16,10 @@ Sources (see profile_builder/Turbofan/README.md):
 Stations and radii are digitized from Figure 2 (scale from the fan diameter, ~±15 mm).
 Airfoil shapes (flat plates), the mixer lobes (radial sidewalls only) and internal structure are simplified.
 Axis = +X, x = 0 at the fan leading edge (fan face). Units mm.
-18 parts in 4 sub-assemblies (fan_module, static_structure, spools, core_stators) plus the nacelle.
-Assumed for appearance, not taken from the sources: the rounding of the nacelle lip and trailing edge, of
-the fan frame hub and of the plug's forward corner, the plug mounting bolts and the tie bolts between the
+22 parts in 5 sub-assemblies (nacelle, fan_module, static_structure, spools, core_stators).
+Assumed for appearance, not taken from the sources: the nacelle contour between the Table I dimensions
+(elliptical lip and forebody, boat-tail), the stations where its four sections meet, the separate lip skin and
+the bevelled joint lines, the rounding of the fan frame hub and of the plug's forward corner, the plug mounting bolts and the tie bolts between the
 two HPT disks (counts, sizes, radii), the split of each spool into a shaft and its rotors, and the finishes
 (lib/materials.py). Fasteners are a nut and stud end standing on a face; no holes are cut.
 """
@@ -29,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # models/, for the
 
 from cadgen import glb, step, stl
 from lib.materials import finishes, groups, recipes
-from lib.shapes import assemble, flange_bolts, interp, stage, tip_radius, tube_profile, x_half
+from lib.shapes import assemble, flange_bolts, interp, segment, stage, tip_radius, tube_profile, x_half
 
 FAN_TIP_R = 1054.0     # Table I: fan Ø2108
 FAN_CASE_R = 1059.0    # 5 mm tip clearance
@@ -72,12 +75,38 @@ def row_ops(stages, kind, bore=0):
             for op in stage(*st, bore=bore, outer=GAS_OUTER, hub=GAS_HUB, gap=GAP)]
 
 
-def nacelle():
-    """Long-duct mixed-flow nacelle: highlight 1590 mm ahead of the fan, 6033 mm long, Ø1590 exit."""
-    outer = [(-1590, 1080), (-1400, 1190), (-900, 1240), (0, 1244.5), (1500, 1244.5), (3000, 1100), (4443, 820)]
-    inner = [(4443, 795), (2500, 1000), (1000, FAN_CASE_R), (0, FAN_CASE_R), (-400, 1040), (-1400, 1010), (-1560, 1040), (-1590, 1060)]
-    # lathe rounds the lip, the forebody knuckle and the trailing edge; the lip keeps a 4 mm land at the highlight station
-    return [("lathe", "Nacelle", outer + inner, 60)]
+def bezier(p0, p1, p2, n=16):
+    return [tuple((1 - t) ** 2 * a + 2 * (1 - t) * t * b + t * t * c for a, b, c in zip(p0, p1, p2))
+            for t in (i / n for i in range(n + 1))]
+
+
+# Long-duct mixed-flow nacelle (x, r): highlight 1590 mm ahead of the fan, 6033 mm long, Ø1590 exit (Table I).
+NAC_MAX_R = 1244.5               # Table I: max nacelle Ø2489
+NAC_LIP_R = 0.86 * NAC_MAX_R     # Table I: highlight / max diameter
+NAC_THROAT = (-1250.0, 1010.0)   # inlet throat, read from Figure 2
+NAC_EXIT = (4443.0, 795.0)       # Table I: exhaust nozzle Ø1590
+# outside: elliptical forebody from the highlight to the max diameter, parallel section, boat-tail to the exit
+NAC_OUTER = (bezier((-1590, NAC_LIP_R), (-1590, NAC_MAX_R), (-650, NAC_MAX_R), 32)
+             + bezier((1300, NAC_MAX_R), (2750, NAC_MAX_R), (NAC_EXIT[0], NAC_EXIT[1] + 25)))
+# inside: lip to the throat, diffuser (smoothstep) to the fan case, fan case, duct converging to the exit
+NAC_INNER = (bezier((-1590, NAC_LIP_R), (-1590, NAC_THROAT[1]), NAC_THROAT, 32)
+             + [(NAC_THROAT[0] + 1100 * t, NAC_THROAT[1] + (FAN_CASE_R - NAC_THROAT[1]) * t * t * (3 - 2 * t))
+                for t in (i / 12 for i in range(1, 13))]
+             + bezier((1000, FAN_CASE_R), (2700, FAN_CASE_R), NAC_EXIT))
+NAC_JOINTS = (-1340, -80, 1000, 3100)  # lip skin | inlet | fan frame | reverser | tailpipe (Figure 20)
+
+
+def nacelle_section(name, x0, x1):
+    """One axial slice of the nacelle wall, its four edges bevelled so the joints read as panel lines."""
+    return [("lathe", name, segment(NAC_OUTER, NAC_INNER, x0, x1), 5, (0, 0, 0), (1, 0, 0), True)]
+
+
+def nacelle_lip():
+    """Lip skin: outside and inside meet at the highlight, where the profile turns without a corner."""
+    x1 = NAC_JOINTS[0]
+    outer = [p for p in NAC_OUTER if p[0] < x1] + [(x1, interp(NAC_OUTER, x1))]
+    inner = [(x1, interp(NAC_INNER, x1))] + [p for p in reversed(NAC_INNER) if p[0] < x1][:-1]
+    return [("lathe", "LipSkin", outer + inner, 5, (0, 0, 0), (1, 0, 0), True)]
 
 
 def fan():
@@ -134,7 +163,11 @@ def exhaust_plug():
 def spec():
     """[(sub-assembly or None, part label, finish, ops)]: one entry per part (see lib/shapes.py for the op format)."""
     return [
-        (None, "nacelle", "paint_grey", nacelle()),
+        ("nacelle", "inlet_lip", "polished_alloy", nacelle_lip()),
+        ("nacelle", "inlet", "paint_grey", nacelle_section("Inlet", *NAC_JOINTS[0:2])),
+        ("nacelle", "fan_frame_cowl", "composite", nacelle_section("FanFrameCowl", *NAC_JOINTS[1:3])),
+        ("nacelle", "reverser", "paint_grey", nacelle_section("Reverser", *NAC_JOINTS[2:4])),
+        ("nacelle", "tailpipe", "nozzle_alloy", nacelle_section("Tailpipe", NAC_JOINTS[3], NAC_EXIT[0])),
 
         ("fan_module", "spinner", "dark_steel", [("spline", "Spinner", [(-568, 0), (-400, 190), (-200, 295), (0, 330)])]),
         ("fan_module", "fan", "machined_steel", fan()),

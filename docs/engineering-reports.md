@@ -1,8 +1,9 @@
 # Engineering PDF reports
 
-`tools/engineering_report.py` combines CAD renders, specification tables,
+`reports/engineering_report.py` combines CAD renders, specification tables,
 component measurements, material/mass entries, sources and vector engineering
-drawings in one PDF. Its report definition is a YAML file under `reports/`.
+drawings in one PDF. Its report definition is a YAML file in the model's own
+`models/<model>/reports/` folder.
 The NACA Lewis 16-inch ramjet is the first working example. For analysis
 documents with equations and plots, see [LaTeX reports](latex-reports.md).
 
@@ -14,7 +15,7 @@ From the CadStudio root. Windows (PowerShell):
 .venv\Scripts\python -m pip install -r requirements.txt
 .venv\Scripts\python tools\patch_cadgen_windows.py
 .venv\Scripts\python models\naca_lewis_16in_ramjet\src\naca_lewis_16in_ramjet.py
-.venv\Scripts\python tools\engineering_report.py reports\naca_lewis_16in_ramjet.yaml
+.venv\Scripts\python reports\engineering_report.py models\naca_lewis_16in_ramjet\reports\naca_lewis_16in_ramjet.yaml
 ```
 
 Ubuntu (the engine install is blocked on Linux for now; see [Ubuntu setup](ubuntu.md)):
@@ -22,7 +23,7 @@ Ubuntu (the engine install is blocked on Linux for now; see [Ubuntu setup](ubunt
 ```bash
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py
-.venv/bin/python tools/engineering_report.py reports/naca_lewis_16in_ramjet.yaml
+.venv/bin/python reports/engineering_report.py models/naca_lewis_16in_ramjet/reports/naca_lewis_16in_ramjet.yaml
 ```
 
 `patch_cadgen_windows.py` is only needed on Windows.
@@ -34,12 +35,12 @@ different final destination.
 
 The default deliverables are:
 
-- `output/pdf/<model>_engineering_report.pdf`
-- `output/pdf/<model>_engineering_report.json` with full input hashes, measured
+- `models/<model>/reports/<model>_engineering_report.pdf`
+- `models/<model>/reports/<model>_engineering_report.json` with full input hashes, measured
   volume, geometry-validity result, component count and page sizes.
 
 Intermediate images and drawing sheets live under ignored `tmp/reports/`.
-Final reports are generated artifacts under ignored `output/`; retain the
+Final reports are generated artifacts in the same folder and are ignored by Git; retain the
 generator, manifest and model source in Git.
 
 ## Define another report

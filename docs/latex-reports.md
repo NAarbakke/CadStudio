@@ -11,10 +11,10 @@ Python computes and LaTeX typesets. Neither generates the other's content:
 
 | File | Role |
 | --- | --- |
-| `tools/latex_report.py` | Fills a template, runs `latexmk`, reports LaTeX errors, sets the plot style |
-| `reports/latex/cadstudio.cls` | The look: a research-memorandum article in Latin Modern with a report-number title block |
-| `reports/latex/<report>.tex` | The document: prose, equations and table layout, with placeholders for values |
-| `reports/latex/<report>.py` | The numbers: reads the model source, calculates, saves plots, calls `build()` |
+| `reports/latex_report.py` | Fills a template, runs `latexmk`, reports LaTeX errors, sets the plot style |
+| `reports/cadstudio.cls` | The look: a research-memorandum article in Latin Modern with a report-number title block |
+| `models/<model>/reports/<report>.tex` | The document: prose, equations and table layout, with placeholders for values |
+| `models/<model>/reports/<report>.py` | The numbers: reads the model source, calculates, saves plots, calls `build()` |
 
 Every number in the PDF comes from the script, so a change to the model
 constants flows through to the tables, plots and prose on the next run. The
@@ -39,14 +39,14 @@ builds a font cache and can take a few minutes; later runs take seconds.
 ## Generate the sample
 
 ```powershell
-.venv\Scripts\python reports\latex\naca_lewis_16in_ramjet.py
+.venv\Scripts\python models\naca_lewis_16in_ramjet\reports\naca_lewis_16in_ramjet_flow_path.py
 ```
 
 ```bash
-.venv/bin/python reports/latex/naca_lewis_16in_ramjet.py
+.venv/bin/python models/naca_lewis_16in_ramjet/reports/naca_lewis_16in_ramjet_flow_path.py
 ```
 
-This writes `output/pdf/naca_lewis_16in_ramjet_flow_path.pdf`: flow-area
+This writes `models/naca_lewis_16in_ramjet/reports/naca_lewis_16in_ramjet_flow_path.pdf`: flow-area
 distribution from the model's Table I coordinates, conical-shock and
 pressure-recovery estimates at the two free-jet Mach numbers, and the chamber
 Mach number over the exit-plug travel. They are ideal one-dimensional
@@ -63,11 +63,13 @@ Intermediate files (`.tex`, figures, LaTeX log) are kept in ignored
 
 ## Write another report
 
-Copy the sample `.py` and `.tex` pair. In the script, build a `context`
+Copy the sample `.py` and `.tex` pair into the model's `reports/` folder. A report that spans
+several models, such as `reports/model_fidelity.py`, stays in the top-level `reports/` folder
+and names its template without a path. In the script, build a `context`
 dictionary and call:
 
 ```python
-build("my_report.tex", context, output_pdf, work_dir)
+build(HERE / "my_report.tex", context, output_pdf, work_dir)
 ```
 
 Template placeholders use LaTeX-friendly delimiters:

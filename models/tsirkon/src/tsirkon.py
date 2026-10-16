@@ -1,6 +1,6 @@
 """3M22 Tsirkon (Zircon): cutaway display model, as reconstructed from open sources.
 
-Sources (profile_builder/Tsirkon/resources/, see its README.md):
+Sources (models/tsirkon/profile/, see its README.md):
   - Luftlage, "Not quite a diamond" (2026), reconstruction article/fig01.jpeg: ~8.5 m long, Ø0.67 m,
     two solid-propellant stages; composite second-stage casing, alloy rear section carrying four
     folding control fins, first stage with cable raceways / actuator-rod housings and jet vanes.

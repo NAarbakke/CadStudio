@@ -2,7 +2,7 @@
 
 42 parts in 8 sub-assemblies (GROUPS) plus the injector, turbine exhaust manifold and heat exchanger.
 
-Sources (profile_builder/F1/resources/, dimensions in inches as published, converted to mm here):
+Sources (models/rocketdyne_f1/profile/resources/, dimensions in inches as published, converted to mm here):
   - R-3896-1 F-1 Technical Manual, Engine Data (Rocketdyne, 1967-72), Figure 2-22 Engine Envelope
     Dimensions: gimbal centre = datum, gimbal block to 14.50 above it, thrust chamber exit flange
     150.00 below it at Ø125.00, nozzle-extension exit 215.50 below it at Ø147.00, envelope R30.00 at

@@ -5,11 +5,12 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "reports" / "latex"))
+sys.path.insert(0, str(ROOT / "reports"))
+SAMPLE = ROOT / "models" / "naca_lewis_16in_ramjet" / "reports"
+sys.path.insert(0, str(SAMPLE))
 import jinja2
 from latex_report import Raw, environment, log_errors, tex_escape
-import naca_lewis_16in_ramjet as sample
+import naca_lewis_16in_ramjet_flow_path as sample
 
 
 class TemplateTests(unittest.TestCase):
@@ -42,7 +43,7 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual(log_errors(log), "./report.tex:12: Undefined control sequence.\nl.12 \\quadNACA\n")
 
     def test_sample_template_parses(self):
-        environment().get_template("naca_lewis_16in_ramjet.tex")
+        environment(SAMPLE).get_template("naca_lewis_16in_ramjet_flow_path.tex")
 
 
 class GasDynamicsTests(unittest.TestCase):

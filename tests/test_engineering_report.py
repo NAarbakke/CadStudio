@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import sys
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "reports"))
 import yaml
 from engineering_report import UniqueLoader, component_rows, point, scalar
 

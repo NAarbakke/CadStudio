@@ -2,7 +2,7 @@
 
 23 parts in 5 sub-assemblies (GROUPS) plus the shaft tunnel.
 
-Source: profile_builder/Nuclear_turbojet/ (side view, 290x105 px).
+Source: models/lyulka_nuclear_turbojet/profile/ (side view, 290x105 px).
 Layout from the drawing: compressor and turbine/nozzle on one axis, joined by a long shaft tunnel;
 compressor air rises through an S-duct into a reactor vessel above the axis (the core is cooled
 directly by the engine air) and falls through a second S-duct to the turbine.

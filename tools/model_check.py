@@ -7,7 +7,7 @@ a nut on a flange) pass: a pair fails when the common volume exceeds --tolerance
 can report a false overlap against a part with hundreds of fused spline blades (the turbojet rotor), so a
 hit is confirmed geometrically: it is cleared when no face of one part comes near a face of the other
 (their bounding boxes stay apart) and neither part contains a vertex of the other. The result is
-also written to tmp/check/<model>_check.json, which reports/latex/model_fidelity.py reads.
+also written to tmp/check/<model>_check.json, which reports/model_fidelity.py reads.
 """
 import argparse
 import itertools

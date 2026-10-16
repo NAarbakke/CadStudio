@@ -1,7 +1,7 @@
 """Recipe builder shared by the three SpaceX Raptor models (op format: lib/shapes.py). Units mm.
 
 Axis = +X from the top of the engine toward the nozzle exit. Layout read from the photographs in
-profile_builder/Raptor/ (README.md there lists what was measured): the oxygen inlet, pump and preburner
+models/spacex_raptor_1/profile/ (README.md there lists what was measured): the oxygen inlet, pump and preburner
 stand on the chamber axis; below them the main injector carries a wide hot-gas manifold disc; the methane
 turbopump hangs under that disc beside the chamber, on PUMP; the coolant manifold sits just below the
 throat at the top of a short, wide bell. spec() takes what differs between the versions: the throat

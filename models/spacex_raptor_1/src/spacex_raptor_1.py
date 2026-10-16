@@ -3,7 +3,7 @@
 The first flight generation, shown with its gimbal mount plate and block on a thrust frame, bolted flange
 joints throughout, the pump discharge duct wrapped around the chamber, valves with actuators, seven small
 lines, two engine controllers with wiring, a torch igniter and sensor ports on the injector and jacket.
-Sources (profile_builder/Raptor/; public figures and photographs, no drawings):
+Sources (models/spacex_raptor_1/profile/; public figures and photographs, no drawings):
   - Wikipedia "SpaceX Raptor": length 3.1 m, diameter 1.3 m, sea-level nozzle expansion ratio 34.34:1.
   - SpaceX photographs of Raptor 1, 2 and 3 (web/nse_img_1300-1302.jpg) and of a sea-level Raptor at
     Hawthorne: the stations and diameters of the main masses, read at about ±5 %.

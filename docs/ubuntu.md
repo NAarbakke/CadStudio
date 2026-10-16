@@ -62,8 +62,8 @@ Build and view:
 
 ```bash
 .venv/bin/python models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py
-.venv/bin/python tools/engineering_report.py reports/naca_lewis_16in_ramjet.yaml
-./open_cad_viewer.sh
+.venv/bin/python reports/engineering_report.py models/naca_lewis_16in_ramjet/reports/naca_lewis_16in_ramjet.yaml
+.venv/bin/python tools/start_viewer.py --open
 ```
 
 LaTeX reports (optional) need a TeX installation that provides `latexmk` and

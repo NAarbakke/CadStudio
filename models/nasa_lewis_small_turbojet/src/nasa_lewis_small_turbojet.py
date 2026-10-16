@@ -1,8 +1,8 @@
 """NASA Lewis small expendable turbojet (1976-77), from its design report and published cross-section.
 
-Sources (profile_builder/Turbojet/README.md):
-  - profile_builder/Turbojet/small_expendable_turbojet_1977.pdf: Ø292 mm max, 965 mm long, 59 kg, 35 170 rpm rated.
-  - profile_builder/Turbojet/TMX-3392_design_fabrication_1976.pdf (NASA TM X-3392, design and fabrication):
+Sources (models/nasa_lewis_small_turbojet/profile/README.md):
+  - models/nasa_lewis_small_turbojet/profile/small_expendable_turbojet_1977.pdf: Ø292 mm max, 965 mm long, 59 kg, 35 170 rpm rated.
+  - models/nasa_lewis_small_turbojet/profile/TMX-3392_design_fabrication_1976.pdf (NASA TM X-3392, design and fabrication):
     Figure 1 cross-section (stations and walls read off it, x = 0 at the nose tip, ~±2 mm), Table II airfoil
     counts, Table III hub/tip chord, thickness, span and tip diameter of every row; text: two-strut inlet
     housing with the front bearing and a 5:1 gearbox in its centrebody, fuel control on top of it; welded
