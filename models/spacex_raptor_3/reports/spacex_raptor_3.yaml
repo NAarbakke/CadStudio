@@ -1,0 +1,77 @@
+schema_version: 1
+title: SpaceX Raptor 3
+subtitle: Integrated third-generation sea-level methane/oxygen engine, 2024-
+document_id: CS-SPX-R3
+revision: A
+status: Photograph-based reconstruction. Overall size is published; the throat is estimated.
+summary: >-
+  A 21-part display model in 5 sub-assemblies on the Raptor 1 layout with the plumbing moved into the housing
+  walls: a flanged oxygen inlet studded onto smooth dark welded housings, housing bosses, the methane pump dropping
+  straight onto the coolant manifold, one thin service line, a bare dark bell, and no visible valves or oxygen line.
+model:
+  source: models/spacex_raptor_3/src/spacex_raptor_3.py
+  step: models/spacex_raptor_3/STEP/spacex_raptor_3.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The engine axis is +X from the top of the engine to the nozzle exit; the methane pump is at +Y.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: "Section through the engine axis: chamber, throat, coolant manifold and bare bell."
+specifications:
+  - label: Length
+    value: 3100 mm
+    basis: Reported
+    source: WIKI
+  - label: Exit diameter
+    value: 1300 mm
+    basis: Reported (same as Raptor 1)
+    source: WIKI
+  - label: Throat diameter
+    value: 223 mm
+    basis: Estimated; Raptor 1 throat area scaled by thrust over chamber pressure
+    source: WIKI
+  - label: Mass / target thrust / chamber pressure
+    value: 1525 kg / 280 tf / 350 bar
+    basis: Reported or stated targets (engine, not this model)
+    source: WIKI
+  - label: Dry mass of this model / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: WIKI
+    title: Wikipedia, "SpaceX Raptor", and SpaceX / Elon Musk statements of 2024.
+    locator: "Mass 1,525 kg; target 280 tf at 350 bar; integral cooling and secondary flow circuits in the walls; no engine heat shield. Shared material in models/spacex_raptor_1/profile/."
+  - id: PHOTOS
+    title: SpaceX photographs of Raptor 1, 2 and 3.
+    locator: "Layout and main masses read at about +/-5 %."
+assumptions:
+  - "The throat diameter is a constant-thrust-coefficient estimate (thrust 280/185 over chamber pressure 350/250)."
+  - "Everything not taken from the sources (housing shapes, contours, flange and bolt sizes, corner radii) is assumed for appearance (models/lib/raptor.py)."
+  - "The service line is indicative; the gimbal actuators are not modelled. Fasteners are a nut and stud end on a flange face; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: SPACEX RAPTOR 3 / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. PHOTOGRAPH-BASED RECONSTRUCTION."
+      - "AXIS +X FROM THE TOP OF THE ENGINE TO THE NOZZLE EXIT."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

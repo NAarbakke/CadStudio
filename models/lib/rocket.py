@@ -65,6 +65,7 @@ def polar_flange(dome_pts, r0, r1, depth):
 
     dome_pts are the dome() points the case is built from, so the seat follows the same chords and the
     ring touches the case without cutting into it; the flat aft face stands `depth` behind the seat at r0.
+    A negative depth puts the flat face ahead of the seat: a closure ring on a forward dome.
     """
     by_r = [(r, x) for x, r in dome_pts]
     seat = [(interp(by_r, r0), r0)] + [p for p in dome_pts if r0 < p[1] < r1] + [(interp(by_r, r1), r1)]
@@ -85,11 +86,12 @@ def motor(name, *, xe0, xe1, r, t, a, port_fwd, port_aft, bore, throat, exit, sk
     """Ops for one solid motor: case (+ skirts), grain, igniter, nozzle; returns {part: ops}.
 
     xe0/xe1 are the dome equator stations, a the dome depth, throat=(x, r), exit=(x, r).
+    "fwd_dome" / "aft_dome" hold the case's outer dome points (for polar_flange), not ops.
     """
     fwd_o, aft_o = dome(xe0, r, a, port_fwd, True), dome(xe1, r, a, port_aft, False)
     fwd_i, aft_i = dome(xe0, r - t, a - t, port_fwd, True), dome(xe1, r - t, a - t, port_aft, False)
     case = fwd_o + list(reversed(aft_o)) + aft_i + list(reversed(fwd_i))
-    ops = {"case": [("revolve", f"{name}Case", case)]}
+    ops = {"case": [("revolve", f"{name}Case", case)], "fwd_dome": fwd_o, "aft_dome": aft_o}
     for i, (x0, x1) in enumerate(skirts or []):
         ops["case"].append(("revolve", f"{name}Skirt{i + 1}", tube(x0, x1, r, t)))
     # the grain follows the case's inner dome points exactly (same chords), cut off at the bore radius

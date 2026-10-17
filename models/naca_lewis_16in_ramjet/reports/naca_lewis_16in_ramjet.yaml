@@ -17,6 +17,7 @@ part_materials: {}
 renders:
   - id: exterior
     title: Exterior assembly
+    source: glb
     camera: "210:20"
     display: render
   - id: longitudinal_section

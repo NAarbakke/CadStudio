@@ -1,0 +1,78 @@
+schema_version: 1
+title: OKB-165 (Lyulka) nuclear turbojet
+subtitle: Direct-cycle nuclear turbojet with an offset reactor
+document_id: CS-LYULKA-NTJ
+revision: A
+status: Reconstruction from a period illustration. Scale and internals are assumed.
+summary: >-
+  A 23-part display model in 5 sub-assemblies. Compressor and turbine/nozzle share one axis, joined by a long shaft
+  tunnel. Compressor air rises through an S-duct into a reactor vessel above the axis, where the core is cooled
+  directly by the engine air, and falls through a second S-duct to the turbine. The layout follows a period side
+  view; the overall scale is set by sizing the compressor module to Lyulka's AL-7.
+model:
+  source: models/lyulka_nuclear_turbojet/src/lyulka_nuclear_turbojet.py
+  step: models/lyulka_nuclear_turbojet/STEP/lyulka_nuclear_turbojet.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The reactor vessel stands above the engine axis; the engine axis is +X.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the engine axis and the reactor: compressor, S-duct up to the vessel, core with end grids,
+      S-duct down to the turbine, shaft tunnel and nozzle.
+specifications:
+  - label: Overall length
+    value: 8940 mm
+    basis: Derived; scale from the AL-7 compressor module
+    source: DRAWING
+  - label: Compressor module diameter
+    value: 1300 mm
+    basis: Assumed from the AL-7
+    source: DRAWING
+  - label: Reactor axis above engine axis
+    value: 975 mm
+    basis: Read from the drawing (px 37 vs 67)
+    source: DRAWING
+  - label: Scale
+    value: 32.5 mm per drawing pixel
+    basis: Derived; no dimensions are published
+    source: DRAWING
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: DRAWING
+    title: Period illustration of the OKB-165 nuclear turbojet, side view (290 x 105 px).
+    locator: "Local files: models/lyulka_nuclear_turbojet/profile/. x_mm = (x_px - 5) * 32.5, r_mm = |y_px - 67| * 32.5."
+assumptions:
+  - "No dimensions are published: the compressor module is sized to Lyulka's AL-7 (diameter 1300 mm, 9-stage compressor, 2-stage turbine)."
+  - "Blade counts, airfoils, wall thicknesses and the reactor internals (a plain core with end grids) are assumptions."
+  - "The intake lip, every flange and bolt circle (M16 studs), the casing/vessel/rotor splits, the vessel stiffening bands, the four control drive housings and the edge chamfers are assumed for appearance; no holes are cut."
+  - "The flanges take the casing from diameter 1300 to 1420 and the vessel from 1500 to 1620."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: LYULKA NUCLEAR TURBOJET / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. STUDY RECONSTRUCTION; SCALE ASSUMED."
+      - "ENGINE AXIS +X. REACTOR ABOVE THE AXIS (+Y)."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

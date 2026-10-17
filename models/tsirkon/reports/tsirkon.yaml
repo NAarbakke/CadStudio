@@ -1,0 +1,92 @@
+schema_version: 1
+title: 3M22 Tsirkon (Zircon)
+subtitle: Cutaway display model reconstructed from open sources
+document_id: CS-TSIRKON
+revision: A
+status: Open-source reconstruction. Station positions about +/-50 mm; internal dimensions are estimates.
+summary: >-
+  A 32-part cutaway in 5 sub-assemblies: launch container with a two-piece protective shroud, nose section with a
+  dark tip, radome, seeker, electronics and payload placeholder, a composite second stage with closure ring, grain,
+  igniter and bolted nozzle flange, an alloy control section with four folding fins, gas duct braced by
+  three spokes and fin actuators, and a first stage with cable raceways, jet vanes and bolted nozzle. Length 8.5 m,
+  diameter 0.67 m.
+model:
+  source: models/tsirkon/src/tsirkon.py
+  step: models/tsirkon/STEP/tsirkon.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The axis is +X from the nose tip; the launch container cap stands ahead of the nose at x < 0.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the axis: seeker and electronics, the two motors with grains and igniters, the gas duct
+      through the control section and the first-stage nozzle with jet vanes.
+specifications:
+  - label: Overall length
+    value: 8500 mm
+    basis: Reconstructed
+    source: LUFT
+  - label: Body diameter
+    value: 670 mm
+    basis: Reconstructed
+    source: LUFT
+  - label: White ogive ends
+    value: x 1640 mm
+    basis: Read from side renders, 9.94 mm per pixel
+    source: LUFT
+  - label: Control section
+    value: x 4821-5915 mm
+    basis: Read from side renders; about 3 body radii long, matching RU2722994
+    source: LUFT
+  - label: Stage joint
+    value: x 5915 mm
+    basis: Read from side renders
+    source: LUFT
+  - label: Folding fins
+    value: 4, about 95 mm proud of the skin when stowed
+    basis: Read from fig03; the deployed shape is not published
+    source: LUFT
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: LUFT
+    title: Luftlage, "Not quite a diamond" (2026) reconstruction.
+    locator: "fig01 overview, fig03 side renders with and without the launch cap (9.94 mm per pixel), fig08 closure ring. Local files: models/tsirkon/profile/article/."
+  - id: KNDISE
+    title: Kyiv forensic institute (KNDISE) side-view sketch of debris.
+    locator: "models/tsirkon/profile/debris/twz_wreckage_2024-02-07.jpg. Its larger first-stage fins are not in the newer renders and are left out."
+  - id: PATENTS
+    title: Patents RU2722994, RU2723276 and RU2776123.
+    locator: Upper-stage motor with gas duct braced by 3 spokes; wound case with bolted nozzle flange; nose inside the launch container under a two-piece shroud. models/tsirkon/profile/patents/.
+assumptions:
+  - "The grains are plain cylindrical-bore cartridges and the payload is an empty placeholder volume."
+  - "The 120 mm dark nose tip as a separate part, the internal bolted frames at the joints (16 x M12), the closure and nozzle-flange rings with their bolt circles (12 x M8), screw rows (36 x diameter 12 heads), fin hinge fittings, jet-vane shafts, corner radii and chamfers are assumed for appearance."
+  - "Fasteners are a nut and stud end standing on a face and screw heads stand on the skin; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: 3M22 TSIRKON / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. OPEN-SOURCE RECONSTRUCTION."
+      - "AXIS +X FROM THE NOSE TIP; LAUNCH CAP AHEAD OF THE NOSE."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

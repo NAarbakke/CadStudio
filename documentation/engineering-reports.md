@@ -43,6 +43,14 @@ Intermediate images and drawing sheets live under ignored `tmp/reports/`.
 Final reports are generated artifacts in the same folder and are ignored by Git; retain the
 generator, manifest and model source in Git.
 
+Every model in `models/` has a manifest, `models/<model>/reports/<model>.yaml`, and its PDF and JSON are written
+beside it. Tables and text continue on further pages when they do not fit one. The component inventory lists the
+sub-assembly of each part from the model's `GROUPS`. To build all of them, one at a time:
+
+```powershell
+foreach ($m in Get-ChildItem models -Directory) { $y = "models\$($m.Name)\reports\$($m.Name).yaml"; if (Test-Path $y) { .venv\Scripts\python reports\engineering_report.py $y } }
+```
+
 ## Define another report
 
 Copy the example manifest and update its model paths, title, document ID,
@@ -59,6 +67,11 @@ and a display preset such as `render` or `solid`. A section uses
 `mode: section` and a plane such as `section: XY`. `hide` names actual STEP
 component labels, which are resolved to CAD references before rendering.
 
+A render with `source: glb` is made from the model's GLB (`models/<model>/GLB/<model>.glb`, or
+`model.glb` in the manifest) instead of the STEP: it is much faster and copes with the large engines,
+but cannot hide parts or cut sections. Use it for the exterior and plan views and keep `mode: section`
+and `hide` renders on the STEP. The STEP part listing that `hide` needs is only read when a render hides parts.
+
 Each drawing creates an ISO A-series sheet using cadgen's engineering drawing
 API. Geometry is projected from the saved STEP with hidden-line removal.
 The default layout has top, front and right views in third-angle arrangement.
@@ -66,7 +79,8 @@ Custom `views` specify view names and their centre positions `at` in sheet mm.
 `parts` optionally selects named components; no simplified outline replaces
 the selected geometry.
 
-`scale` is the model-to-paper ratio: `0.0625` is 1:16. Native A3 drawing pages
+`scale` is the model-to-paper ratio: `0.0625` is 1:16. `scale: auto` picks the largest standard scale at which the
+three views of the whole model fit an A3 sheet. Native A3 drawing pages
 are appended without resizing. Print those pages at actual size to retain the
 title-block scale. Report narrative pages are A4.
 

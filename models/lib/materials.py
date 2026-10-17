@@ -3,7 +3,7 @@
 These are visual finishes for the viewer's Render display and for GLB export (base colour, roughness,
 metalness). Metalness is kept moderate: near 1 the default Render lighting turns large surfaces almost
 black. They are not physical material assignments: no alloy, density or mass is implied
-(docs/model-specs.md). Colours are kept mid to light so shape stays readable with plain shading too.
+(documentation/model-specs.md). Colours are kept mid to light so shape stays readable with plain shading too.
 """
 
 FINISHES = {

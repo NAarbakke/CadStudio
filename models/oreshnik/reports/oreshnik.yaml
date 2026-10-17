@@ -1,0 +1,95 @@
+schema_version: 1
+title: Oreshnik IRBM
+subtitle: Cutaway display model reconstructed from open sources
+document_id: CS-ORESHNIK
+revision: A
+status: Open-source reconstruction. Station positions are read from a side view; internals are estimates.
+summary: >-
+  A 34-part cutaway of the Oreshnik intermediate-range missile in 5 sub-assemblies: nose section with six payload
+  cones on a plate, instrumentation compartment with a lattice end plate, post-boost vehicle with its gas-generator
+  control system, and two solid motors (case, closure ring, grain, igniter, bolted nozzle flange, nozzle), with
+  bolted joint frames and skin screw rows at the section joints. Length 13 m, diameter 1.61 m.
+model:
+  source: models/oreshnik/src/oreshnik.py
+  step: models/oreshnik/STEP/oreshnik.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The axis is +X from the nose tip; the sections are separated by the joint bands and screw rows.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the axis: payload cones and plate, instrumentation drum, post-boost gas generator and valve
+      blocks, and the two motors with their grains, igniters and nozzles.
+specifications:
+  - label: Overall length
+    value: 13000 mm
+    basis: Reconstructed; side view at 12.23 mm per pixel
+    source: LUFT
+  - label: Body diameter
+    value: 1610 mm
+    basis: Reported for the Topol-M 2nd stage
+    source: MOU
+  - label: Upper-stage case diameter
+    value: 1580 mm
+    basis: Reported for the Topol-M 3rd stage
+    source: MOU
+  - label: Instrumentation compartment band
+    value: x 2990-3210 mm
+    basis: Read from the reconstruction
+    source: LUFT
+  - label: Stage separation
+    value: x 6950 mm
+    basis: Read from the reconstruction
+    source: LUFT
+  - label: Nozzle exit
+    value: Diameter 1390 mm at x 13000 mm
+    basis: Read from the reconstruction
+    source: LUFT
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: LUFT
+    title: Luftlage, "The missile that came in from the cold" (2026).
+    locator: "fig01 reconstruction, fig02 post-boost control system from debris, fig03 instrumentation compartment, fig08 Yars reconstruction. Local files: models/oreshnik/profile/article/."
+  - id: START
+    title: START-1 user handbook vol. 1.
+    locator: "p.3 fig 1-1 and section 1.2, p.26-27 figs 3-1/3-2 (head module, sealed IC, propulsion module, fairing ring, adapter lattice). models/oreshnik/profile/references/."
+  - id: MOU
+    title: START MOU 1998, Annex F.
+    locator: Topol-M 2nd stage diameter 1.61 m, 3rd stage 1.58 m.
+  - id: PATENTS
+    title: Patents RU2743670 and RU2703556.
+    locator: Post-boost gas generator (end-burning charge, cover with nozzle blocks) and two-outlet gas valve. models/oreshnik/profile/patents/.
+assumptions:
+  - "Station positions are read from the Luftlage side view at about +/-50 mm; no source gives wall thickness (15 mm assumed), frame depths, motor dome depths (400 mm), grain bores or nozzle throats and bell angles."
+  - "Post-boost control system sizes are fig02 proportions scaled to its 1.58 m ring; the forward-firing nozzles are drawn axial where fig02 cants them outward."
+  - "The lattice end plate is 30 mm ribs at 110 mm pitch; the instrumentation contents, reentry-vehicle frame and the six cones are placeholders."
+  - "Closure rings, nozzle flanges (12 x M16), joint-frame bolt circles (36 x M14), 48-head screw rows, corner radii and chamfers are assumed for appearance; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: ORESHNIK IRBM / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. OPEN-SOURCE RECONSTRUCTION."
+      - "AXIS +X FROM THE NOSE TIP."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

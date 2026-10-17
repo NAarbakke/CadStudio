@@ -1,0 +1,89 @@
+schema_version: 1
+title: NASA Lewis small expendable turbojet
+subtitle: 1976-77 low-cost turbojet / NASA TM X-3392
+document_id: CS-NASA-STJ
+revision: A
+status: Sourced study reconstruction. Drawing dimensions describe the CAD model.
+summary: >-
+  A 21-part display model in 6 sub-assemblies: two-strut inlet housing with gearbox and front bearing, fuel control,
+  welded 4-stage blade-disk drum with lofted airfoils at the design counts, annular snout combustor with manifold,
+  12 nozzles and igniters, hollow mainshaft, one-piece 35-vane turbine stator, 57-blade rotor, strutted exhaust
+  with the rear bearing, convergent nozzle and bolted casing joints.
+model:
+  source: models/nasa_lewis_small_turbojet/src/nasa_lewis_small_turbojet.py
+  step: models/nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The nose tip is at x = 0; the engine axis is +X.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the engine axis: inlet and gearbox, compressor drum, annular combustor with snout,
+      turbine stator and rotor, exhaust struts and convergent nozzle.
+specifications:
+  - label: Maximum diameter
+    value: 292 mm
+    basis: Reported
+    source: SET77
+  - label: Length
+    value: 965 mm
+    basis: Reported
+    source: SET77
+  - label: Engine mass
+    value: 59 kg
+    basis: Reported (engine, not this model)
+    source: SET77
+  - label: Rated speed
+    value: 35 170 rpm
+    basis: Reported
+    source: SET77
+  - label: Turbine rotor / stator counts
+    value: 57 blades / 35 vanes
+    basis: Reported; Table II
+    source: TMX3392
+  - label: Rotor tip diameter
+    value: 245.8 mm
+    basis: Reported; Table III
+    source: TMX3392
+  - label: Dry mass of this model / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: SET77
+    title: Small expendable turbojet (NASA Lewis, 1977).
+    locator: "Local file: models/nasa_lewis_small_turbojet/profile/small_expendable_turbojet_1977.pdf."
+  - id: TMX3392
+    title: NASA TM X-3392 - Design and fabrication of the small expendable turbojet (1976).
+    locator: "Figure 1 cross-section (stations and walls read off it, about +/-2 mm), Table II airfoil counts, Table III row dimensions. Local file: models/nasa_lewis_small_turbojet/profile/TMX-3392_design_fabrication_1976.pdf."
+assumptions:
+  - "Airfoil stagger and twist are not tabulated; sections are elliptical and stacked radially."
+  - "The 8-vane swirlers and liner perforations are left out."
+  - "Wall and flange thicknesses, disk web and bore shapes, strut thickness, fuel control box size, trunnion boss size and igniter clocking are assumed."
+  - "Every bolt circle (counts, sizes, radii) at the inlet flange and the five casing joints, edge chamfers, bearing corner radii and the igniter boss/plug split are assumed for appearance; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: NASA LEWIS TURBOJET / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. STUDY RECONSTRUCTION."
+      - "ENGINE AXIS +X. X = 0 AT THE NOSE TIP."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

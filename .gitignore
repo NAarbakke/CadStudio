@@ -1,6 +1,6 @@
 .venv/
 __pycache__/
 tmp/
-inspo/
+inspiration/
 
 # models/.gitignore keeps each model's generated STEP, STL, GLB, FreeCAD, SolidWorks, reports and profile folders out of git

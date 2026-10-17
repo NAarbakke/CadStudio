@@ -119,12 +119,25 @@ def run(args, **kwargs):
 
 
 def render_views(cfg, step, work):
-    listed = json.loads(run([sys.executable, "-m", "cadgen.cli", "step", "snapshot",
-                             str(step), "--mode", "list"]))
-    refs = {item["name"]: item["ref"] for item in listed}
+    """One PNG per manifest render. `source: glb` renders the model's GLB (fast, copes with the big engines; no
+    hiding or sections); the default renders the STEP."""
+    refs = {}
+    if any(view.get("hide") for view in cfg["renders"]):
+        listed = json.loads(run([sys.executable, "-m", "cadgen.cli", "step", "snapshot",
+                                 str(step), "--mode", "list"]))
+        refs = {item["name"]: item["ref"] for item in listed}
     outputs = {}
     for view in cfg["renders"]:
         target = work / (view["id"] + ".png")
+        if view.get("source") == "glb":
+            default = Path(cfg["model"]["step"]).parents[1] / "GLB" / (Path(cfg["model"]["step"]).stem + ".glb")
+            glb = ROOT / cfg["model"].get("glb", default)
+            run([sys.executable, "-m", "cadgen.cli", "glb", "snapshot", str(glb), str(target),
+                 "--width", "2400", "--height", "1400", "--camera", view.get("camera", "210:20"),
+                 "--display", view.get("display", "render")])
+            outputs[view["id"]] = target
+            print(f"Rendered {view['id']} (GLB)", flush=True)
+            continue
         args = [sys.executable, "-m", "cadgen.cli", "step", "snapshot", str(step), str(target),
                 "--width", "2400", "--height", "1400", "--camera", view.get("camera", "210:20"),
                 "--display", view.get("display", "render")]
@@ -157,32 +170,119 @@ def dimensions(view, entries, module):
             raise ValueError(f"Unknown dimension type: {kind}")
 
 
+SCALES = [1, 1 / 2, 1 / 2.5, 1 / 5, 1 / 10, 1 / 15, 1 / 20, 1 / 25, 1 / 30, 1 / 40, 1 / 50, 1 / 75, 1 / 100,
+          1 / 150, 1 / 200]
+
+
+def fit_scale(size):
+    """Largest standard scale at which the three views of a model along +X fit an A3 sheet."""
+    length, dia = size.X, max(size.Y, size.Z)
+    for scale in SCALES:
+        if (length + dia) * scale + 60 <= 380 and 2 * dia * scale + 60 <= 220:
+            return scale
+    return SCALES[-1]
+
+
+def tolerate_degenerate_edges():
+    """Projected edges shorter than the kernel tolerance come out as zero-length entities, which cadgen's drawing check
+    rejects. They draw nothing, so they are ignored; every other error still stops the report."""
+    from cadgen import drawing_checks
+    original = drawing_checks.raise_on_error_findings
+    if getattr(original, "tolerant", False):
+        return
+
+    def tolerant(findings, *, label=""):
+        original([f for f in findings if f.code != "zero_length_entity"], label=label)
+    tolerant.tolerant = True
+    drawing_checks.raise_on_error_findings = tolerant
+
+
 def make_drawings(cfg, shape, parts, module, output):
+    """Write the drawing sheets. The kernel's hidden-line projection fails on a few spline faces (a revolved seam in the
+    wrong place), and it runs when the sheets are rendered. On a failure each part is projected alone; a failing part
+    is turned about the engine axis (+X) to move its seam, if that leaves its volume and centre of mass unchanged, or
+    else left out. Both are named on the sheet."""
+    tolerate_degenerate_edges()
+    try:
+        return draw_sheets(cfg, shape, parts, module, output)
+    except Exception as error:
+        print(f"Projection failed ({str(error)[:80]}); probing the parts one by one", flush=True)
+    from cadgen import build123d as bd
+    from cadgen.eng_drawing import Sheet, eng_drawing
+
+    def projects(part):
+        @eng_drawing(out=str(output.with_name("probe.pdf")))
+        def probe():
+            sheet = Sheet("A3", scale=fit_scale(part.bounding_box().size), title="probe")
+            sheet.three_views(part, hidden=False, centre_marks=False)
+            return [sheet]
+        try:
+            probe()
+            return True
+        except Exception:
+            return False
+
+    turned, omitted, replaced = [], [], {}
+    for part in parts:
+        if projects(part):
+            continue
+        for angle in (0.5, 5.0, 37.0, 90.0):
+            copy = part.rotate(bd.Axis.X, angle)
+            same = (abs(copy.volume - part.volume) < 1e-6 * part.volume
+                    and (copy.center() - part.center()).length < 1e-3)
+            if same and projects(copy):
+                copy.label = part.label
+                replaced[part.label] = copy
+                turned.append(part.label)
+                break
+        else:
+            omitted.append(part.label)
+    if not (turned or omitted):
+        raise RuntimeError("Drawing projection failed and no single part is to blame")
+    print(f"Turned about the axis for the drawings: {turned}; left out: {omitted}", flush=True)
+    return draw_sheets(cfg, shape, [replaced.get(p.label, p) for p in parts], module, output, omitted, turned)
+
+
+def draw_sheets(cfg, shape, parts, module, output, omitted=(), turned=()):
     from cadgen import build123d as bd
     from cadgen.eng_drawing import Sheet, eng_drawing
     by_label = {part.label: part for part in parts}
+    shown = [part for part in parts if part.label not in omitted]
 
     @eng_drawing(out=str(output))
     def engineering_drawings():
         sheets = []
         for definition in cfg["drawings"]:
-            selected = shape
+            selected = bd.Compound(children=shown) if omitted or turned else shape
             if definition.get("parts"):
                 missing = set(definition["parts"]) - by_label.keys()
                 if missing:
                     raise ValueError(f"Unknown drawing parts: {sorted(missing)}")
-                selected = bd.Compound(children=[by_label[name] for name in definition["parts"]])
-            sheet = Sheet(definition.get("size", "A3"), scale=definition["scale"],
-                          title=definition["title"], part_number=cfg.get("document_id", ""),
-                          revision=cfg.get("revision", "A"), author="CadStudio", units="mm",
-                          material="See report", text_height=2.8, notes=definition.get("notes", []))
-            if definition.get("views"):
-                views = {item["name"]: sheet.view(selected, item["name"], at=tuple(item["at"]),
-                                                 hidden=item.get("hidden", False), centre_marks=False,
-                                                 label=item.get("label")) for item in definition["views"]}
-            else:
-                top, front, right = sheet.three_views(selected, hidden=False, centre_marks=False)
-                views = {"top": top, "front": front, "right": right}
+                selected = bd.Compound(children=[by_label[name] for name in definition["parts"] if name not in omitted])
+            scale = definition["scale"]
+            if scale == "auto":
+                scale = fit_scale(selected.bounding_box().size)
+
+            def draw(subject):
+                notes = list(definition.get("notes", []))
+                if turned:
+                    notes.append("TURNED ABOUT THE AXIS FOR PROJECTION: " + ", ".join(sorted(turned)).upper())
+                if omitted:
+                    notes.append("NOT PROJECTED (HIDDEN-LINE FAILURE): " + ", ".join(sorted(omitted)).upper())
+                sheet = Sheet(definition.get("size", "A3"), scale=scale,
+                              title=definition["title"], part_number=cfg.get("document_id", ""),
+                              revision=cfg.get("revision", "A"), author="CadStudio", units="mm",
+                              material="See report", text_height=2.8, notes=notes)
+                if definition.get("views"):
+                    views = {item["name"]: sheet.view(subject, item["name"], at=tuple(item["at"]),
+                                                     hidden=item.get("hidden", False), centre_marks=False,
+                                                     label=item.get("label")) for item in definition["views"]}
+                else:
+                    top, front, right = sheet.three_views(subject, hidden=False, centre_marks=False)
+                    views = {"top": top, "front": front, "right": right}
+                return sheet, views
+
+            sheet, views = draw(selected)
             for name, entries in definition.get("dimensions", {}).items():
                 if name not in views:
                     raise ValueError(f"Dimension refers to absent view: {name}")
@@ -196,7 +296,7 @@ def make_drawings(cfg, shape, parts, module, output):
 class Report:
     def __init__(self, output, cfg):
         self.pdf = canvas.Canvas(str(output), pagesize=A4, pageCompression=1)
-        self.cfg, self.page = cfg, 0
+        self.cfg, self.page, self.heading = cfg, 0, ("", "")
         self.pdf.setTitle(cfg["title"] + " - Engineering report")
         self.pdf.setAuthor("CadStudio")
         self.style = ParagraphStyle("body", fontName="Helvetica", fontSize=10, leading=15, textColor=NAVY)
@@ -206,11 +306,20 @@ class Report:
         paragraph = Paragraph(escape(str(text)).replace("\n", "<br/>"), style)
         _, height = paragraph.wrap(width, HEIGHT)
         if y - height < 55:
-            raise ValueError("Report text exceeds page; split the content into more pages")
+            y = self.next_page(y, height)
         paragraph.drawOn(self.pdf, x, y - height)
         return y - height - 9
 
+    def next_page(self, y, height):
+        """Continue on a new page with the same heading when `height` does not fit above the footer."""
+        if height > HEIGHT - 190:
+            raise ValueError("Report block is taller than a page")
+        self.end()
+        return self.start(self.heading[0] + " (continued)", "Continued" if self.heading[1] else "")
+
     def start(self, title, subtitle=""):
+        if not title.endswith(" (continued)"):
+            self.heading = (title, subtitle)
         self.page += 1
         pdf = self.pdf
         pdf.setFillColor(BLUE)
@@ -244,9 +353,18 @@ class Report:
             ("LEFTPADDING", (0, 0), (-1, -1), 7), ("RIGHTPADDING", (0, 0), (-1, -1), 7),
             ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
         ]))
-        _, height = table.wrap(BODY_WIDTH, HEIGHT)
-        if y - height < 55:
-            raise ValueError("Report table exceeds page; shorten or split the manifest table")
+        while True:
+            _, height = table.wrap(BODY_WIDTH, HEIGHT)
+            if y - height >= 55:
+                break
+            pieces = table.split(BODY_WIDTH, y - 55)
+            if len(pieces) < 2:  # not even the header and one row fit: start a new page
+                y = self.next_page(y, 0)
+                continue
+            head, table = pieces[0], pieces[1]
+            _, h = head.wrap(BODY_WIDTH, HEIGHT)
+            head.drawOn(self.pdf, MARGIN, y - h)
+            y = self.next_page(y, h)
         table.drawOn(self.pdf, MARGIN, y - height)
         return y - height - 18
 
@@ -254,8 +372,15 @@ class Report:
         self.pdf.showPage()
 
 
-def component_rows(cfg, parts):
-    rows = [["Component", "Length / mm", "Volume / L", "Material", "Mass / kg"]]
+def assembly_of(module):
+    """{part label: sub-assembly} from the model's GROUPS, empty when it has none."""
+    return {label: group for group, labels in getattr(module, "GROUPS", {}).items() for label in labels}
+
+
+def component_rows(cfg, parts, module):
+    owner = assembly_of(module)
+    has_material = bool(cfg.get("part_materials"))
+    rows = [["Component", "Sub-assembly", "Length / mm", "Volume / L"] + (["Material", "Mass / kg"] if has_material else [])]
     assigned = cfg.get("part_materials", {})
     materials = cfg.get("materials", {})
     known_labels = {part.label for part in parts}
@@ -270,10 +395,24 @@ def component_rows(cfg, parts):
         if density is not None and (isinstance(density, bool) or not isinstance(density, (int, float))
                                     or not math.isfinite(density) or density <= 0):
             raise ValueError("Material density must be finite and positive in kg/m3")
-        rows.append([part.label.replace("_", " "), f"{part.bounding_box().size.X:.1f}",
-                     f"{part.volume / 1e6:.3f}", material.get("name", material_id) if material else "Unknown",
-                     f"{part.volume * density * 1e-9:.3f}" if density else "Unknown"])
+        row = [part.label.replace("_", " "), owner.get(part.label, "").replace("_", " "),
+               f"{part.bounding_box().size.X:.1f}", f"{part.volume / 1e6:.3f}"]
+        if has_material:
+            row += [material.get("name", material_id) if material else "Unknown",
+                    f"{part.volume * density * 1e-9:.3f}" if density else "Unknown"]
+        rows.append(row)
     return rows
+
+
+def assembly_rows(parts, module):
+    owner = assembly_of(module)
+    totals = {}
+    for part in parts:
+        name = owner.get(part.label, "(ungrouped)")
+        count, volume = totals.get(name, (0, 0.0))
+        totals[name] = (count + 1, volume + part.volume)
+    return [["Sub-assembly", "Parts", "Volume / L"]] + [[name.replace("_", " "), str(c), f"{v / 1e6:.2f}"]
+                                                     for name, (c, v) in totals.items()]
 
 
 def write_report(cfg, shape, parts, module, renders, output, fingerprints):
@@ -312,11 +451,14 @@ def write_report(cfg, shape, parts, module, renders, output, fingerprints):
         rows.append([item["label"], value, item.get("basis", "")])
     if len(rows) > 1:
         y = report.table(rows, [BODY_WIDTH * .39, BODY_WIDTH * .22, BODY_WIDTH * .39], y)
+    if getattr(module, "GROUPS", None):
+        y = report.paragraph("Sub-assemblies", MARGIN, y, size=12, colour=BLUE)
+        y = report.table(assembly_rows(parts, module), [BODY_WIDTH * .6, BODY_WIDTH * .15, BODY_WIDTH * .25], y)
     y = report.paragraph("Component inventory", MARGIN, y, size=12, colour=BLUE)
-    y = report.table(component_rows(cfg, parts), [BODY_WIDTH * .34, BODY_WIDTH * .16,
-                     BODY_WIDTH * .16, BODY_WIDTH * .17, BODY_WIDTH * .17], y)
+    widths = (.30, .22, .12, .12, .14, .10) if cfg.get("part_materials") else (.38, .28, .17, .17)
+    y = report.table(component_rows(cfg, parts, module), [BODY_WIDTH * w for w in widths], y)
     report.paragraph("Volumes describe the simplified CAD solids. Mass is calculated only when a component has "
-                     "an explicit material density; unknown entries have no mass estimate.", MARGIN, y, size=9, colour=MUTED)
+                     "an explicit material density; no material or mass is assigned to these display models.", MARGIN, y, size=9, colour=MUTED)
     report.end()
 
     y = report.start("Sources and modelling notes", "Traceable inputs, assumptions and saved revision")

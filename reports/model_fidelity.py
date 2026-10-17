@@ -134,6 +134,14 @@ def snapshot(step, target, camera, display="solid", size=(2400, 1500)):
     return target.name
 
 
+def glb_snapshot(glb, target, camera, size=(2400, 1500)):
+    """Render a saved GLB (fast, display only) unless the image is already newer than it."""
+    if not target.is_file() or target.stat().st_mtime < glb.stat().st_mtime:
+        run([sys.executable, "-m", "cadgen.cli", "glb", "snapshot", glb, target, "--camera", camera,
+             "--display", "render", "--width", size[0], "--height", size[1]], cwd=glb.parent)
+    return target.name
+
+
 def figure_corners(module, path):
     """A real profile from the pilot model, as drawn in the recipe and as lathe() rounds it."""
     from lib.shapes import round_profile
@@ -212,8 +220,8 @@ def main():
         gallery = []
         for row in rows:
             if row["after"]["upgraded"] and row["model"] != PILOT:
-                gallery.append({"title": row["title"], "image": snapshot(
-                    ROOT / "models" / row["model"] / "STEP" / f"{row['model']}.step", WORK / f"{row['model']}_render.png", VIEW, RENDER,
+                gallery.append({"title": row["title"], "image": glb_snapshot(
+                    ROOT / "models" / row["model"] / "GLB" / f"{row['model']}.glb", WORK / f"{row['model']}_render.png", VIEW,
                     (2400, 1100))})
         images["gallery"] = gallery
 

@@ -9,8 +9,8 @@ and pushed into SolidWorks, Fusion or Onshape.
 | Turbofan | `models/ge_e3_turbofan/src/ge_e3_turbofan.py` | GE/NASA Energy Efficient Engine (E3): two-spool, long-duct mixed-flow turbofan, fan with 50 %-span shroud, 64 bypass OGVs, 18-lobe mixer, every core row at its design airfoil count, each spool split into shaft and rotors, nacelle in four sections (inlet with a polished lip skin, composite fan frame cowl, reverser, tailpipe), plug and HPT tie bolts; 22 parts in 5 sub-assemblies | Dimensions and flowpath from the E3 NASA report, counts from the E3 component design reports (`models/ge_e3_turbofan/profile/`) |
 | Turbojet | `models/nasa_lewis_small_turbojet/src/nasa_lewis_small_turbojet.py` | NASA Lewis small expendable turbojet: two-strut inlet with gearbox and front bearing, fuel control, welded 4-stage drum with lofted airfoils at the design counts, snout combustor with manifold, 12 nozzles and igniters, hollow mainshaft, one-piece 35-vane turbine stator, 57-blade rotor, strutted exhaust with rear bearing, convergent nozzle, bolted casing joints; 21 parts in 6 sub-assemblies | Design report NASA TM X-3392: Figure 1 cross-section, airfoil tables (`models/nasa_lewis_small_turbojet/profile/`) |
 | Nuclear turbojet | `models/lyulka_nuclear_turbojet/src/lyulka_nuclear_turbojet.py` | OKB-165 (Lyulka) direct-cycle nuclear turbojet: offset reactor above the axis, S-ducts from the compressor and to the turbine, long shaft tunnel, intake lip, flanged and bolted casing, duct, vessel and nozzle joints, vessel bands and control drive housings, spool split into shaft and rotors; 23 parts in 5 sub-assemblies | Layout from a period illustration, scaled to the AL-7 (`models/lyulka_nuclear_turbojet/profile/`) |
-| Tsirkon | `models/tsirkon/src/tsirkon.py` | 3M22 Tsirkon (Zircon) cutaway: launch shroud, radome, seeker, electronics, payload placeholder, two solid motors (case, grain, igniter, nozzle), extended gas duct with fin actuators and bracing spokes, folding fins, raceways, jet vanes; 17 parts | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`models/tsirkon/profile/`) |
-| Oreshnik | `models/oreshnik/src/oreshnik.py` | Oreshnik IRBM cutaway: nose fairing, six payload cones on a plate, post-boost stage layout, instrumentation compartment, two solid motors (case, grain, igniter, nozzle), aft skirt; 18 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m), with further references recorded in the source (`models/oreshnik/profile/`) |
+| Tsirkon | `models/tsirkon/src/tsirkon.py` | 3M22 Tsirkon (Zircon) cutaway: launch shroud, radome, seeker, electronics, payload placeholder, two solid motors (case, grain, igniter, nozzle) with closure rings and bolted nozzle flanges, extended gas duct with fin actuators and bracing spokes, folding fins, raceways, jet vanes, bolted joint frames and skin screw rows; 32 parts in 5 sub-assemblies | Luftlage "Not quite a diamond" reconstruction (8.5 m × Ø0.67 m) + KNDISE side-view sketch (`models/tsirkon/profile/`) |
+| Oreshnik | `models/oreshnik/src/oreshnik.py` | Oreshnik IRBM cutaway: nose fairing, six payload cones on a plate, post-boost stage layout, instrumentation compartment, two solid motors (case, grain, igniter, nozzle), aft skirt, bolted joint frames and skin screw rows; 34 parts | Luftlage "The missile that came in from the cold" reconstruction (13 m × Ø1.61 m), with further references recorded in the source (`models/oreshnik/profile/`) |
 | F-1 | `models/rocketdyne_f1/src/rocketdyne_f1.py` | Rocketdyne F-1 (Saturn V S-IC) rocket engine: gimbal, hollow LOX dome, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to 10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator, valves, flat-topped LOX dome with ring manifold and elbow inlets, four high-pressure ducts, bolted flanges; 42 parts in 8 sub-assemblies | R-3896-1 technical manual Fig 2-22 envelope dimensions + performance data, heroicrelics section drawings (`models/rocketdyne_f1/profile/`) |
 | Ramjet | `models/naca_lewis_16in_ramjet/src/naca_lewis_16in_ramjet.py` | NACA Lewis 16-inch ram jet (1951 altitude-wind-tunnel engine): translating spike, sharp-lip conical diffuser, three-strut centre body with pilot cup, four dual-arc fuel bars with 16 upstream nozzles, gutter-grid flame holder, water-cooled Ø16 in chamber with a copper cooling coil, convergent nozzle, movable tail plug on two strut rings, five bolted flange joints; 15 parts in 4 sub-assemblies | NACA RM E51C16 Table I coordinates, Figures 1-3 and text; RM E52D08 (`models/naca_lewis_16in_ramjet/profile/`) |
 | Raptor 1 | `models/spacex_raptor_1/src/spacex_raptor_1.py` | SpaceX Raptor 1 sea-level engine: mount plate and gimbal block on a thrust frame, oxygen pump and preburner on the chamber axis, Ø870 hot-gas manifold disc on the main injector, methane turbopump under the disc beside the chamber (turbine, preburner, pump, inlet duct), jacketed chamber with a coolant collector, heat-tinted throat, coolant manifold just below it fed by a duct wrapped around the chamber, short wide bell, swept ducts, seven small lines, two engine controllers with wiring, valves with actuators, torch igniter, sensor ports, bolted flanges throughout; 36 parts in 5 sub-assemblies | Published envelope (3.1 m long, Ø1.3 m exit, 34.34:1 expansion); stations and diameters of the main masses read from SpaceX photographs at about ±5 % (`models/spacex_raptor_1/profile/`); the rest is assumed (`models/lib/raptor.py`) |
@@ -27,15 +27,15 @@ are written in inches, as their sources are, and scaled once); the engine axis i
 Requires Python 3.11+ (tested on 3.13, Windows 11).
 
 Commands are shown in Windows PowerShell. On Ubuntu, use `.venv/bin/python` in place of
-`.venv\Scripts\python` and forward slashes in paths. See [Ubuntu setup](docs/ubuntu.md) for what does and does not work there.
+`.venv\Scripts\python` and forward slashes in paths. See [Ubuntu setup](documentation/ubuntu.md) for what does and does not work there.
 
 The engine and bundled CAD Viewer are pinned to text-to-cad/cadgen 0.7.19.
 Model dimensions and geometry recipes currently live in Python; see
-[model specification format](docs/model-specs.md) for the proposed YAML data
+[model specification format](documentation/model-specs.md) for the proposed YAML data
 format, material/mass handling and cache-aware migration approach.
 
 Engineering reports combine 3D renders, component/specification tables, source
-notes and dimensioned vector drawings. See [engineering reports](docs/engineering-reports.md).
+notes and dimensioned vector drawings. See [engineering reports](documentation/engineering-reports.md).
 
 ```powershell
 .venv\Scripts\python reports\engineering_report.py models\naca_lewis_16in_ramjet\reports\naca_lewis_16in_ramjet.yaml
@@ -44,7 +44,7 @@ notes and dimensioned vector drawings. See [engineering reports](docs/engineerin
 The PDF is written to `models/naca_lewis_16in_ramjet/reports/naca_lewis_16in_ramjet_engineering_report.pdf`.
 
 Reports with equations, plots and numbered tables can be typeset with LaTeX instead
-(optional; needs TeX Live or MiKTeX). See [LaTeX reports](docs/latex-reports.md).
+(optional; needs TeX Live or MiKTeX). See [LaTeX reports](documentation/latex-reports.md).
 
 ```powershell
 .venv\Scripts\python models\naca_lewis_16in_ramjet\reports\naca_lewis_16in_ramjet_flow_path.py
@@ -58,7 +58,7 @@ python -m venv .venv
 .venv\Scripts\python -m cadgen.cli doctor <path-to-installed-cad-skill>   # checks cadgen + OpenCascade kernel
 ```
 
-On Ubuntu, see [Ubuntu setup](docs/ubuntu.md). The pinned engine does not install on Linux yet.
+On Ubuntu, see [Ubuntu setup](documentation/ubuntu.md). The pinned engine does not install on Linux yet.
 
 ## Build
 
@@ -142,7 +142,7 @@ have them, so bring such a model into SolidWorks with `solidworks_import.py`.
 `reports\model_fidelity.py` writes `models/model_fidelity.pdf`, which measures each model
 against its previous commit (parts, fasteners, rounded profiles, finishes, file sizes). Status: the
 F-1 (42 parts in 8 sub-assemblies, 574 fasteners), the ramjet (15 parts, 240 fasteners), the turbojet
-(21 parts, 144 fasteners), the turbofan (18 parts, 84 fasteners), the nuclear turbojet (23 parts, 600
+(21 parts, 144 fasteners), the turbofan (22 parts in 5 sub-assemblies, 84 fasteners), the nuclear turbojet (23 parts, 600
 fasteners) and the three Raptors (36, 30 and 21 parts; 272, 172 and 68 fasteners) meet the standard;
 Tsirkon and Oreshnik do not yet. The report covers the seven models that existed at its baseline
 commit, not the Raptors. All of these use `lathe` and bolt-circle ops, so `solidworks_build.py` stops
@@ -159,7 +159,7 @@ at them; the nuclear turbojet's earlier native SolidWorks files predate its upgr
   `models/`, starts or reuses a background viewer, verifies its root and prints
   the actual URL. Ports can change; use that URL. Expand **STEP** in the file
   panel and select a model. Opens STEP, STL and GLB; STEP supports topology
-  selection and measurement. See [viewer operation and troubleshooting](docs/viewer.md).
+  selection and measurement. See [viewer operation and troubleshooting](documentation/viewer.md).
   Settings provide clipping/sections and display presets.
 - **PyVista** (desktop window, local OpenGL):
   ```powershell
@@ -167,7 +167,7 @@ at them; the nuclear turbojet's earlier native SolidWorks files predate its upgr
   ```
 - **Snapshot to PNG**: `cd models; ..\.venv\Scripts\python -m cadgen.cli step snapshot nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step ../tmp/view.png [--mode section] [--camera 200:15]`
 
-See [local installation and update notes](docs/local-installation.md) for the
+See [local installation and update notes](documentation/local-installation.md) for the
 engine and viewer locations. For a full export-access check:
 
 ```powershell
@@ -261,7 +261,8 @@ No MCP server is needed; plain Python + pywin32 talks to SolidWorks directly.
   (`Part::Box`/`Part::Cylinder`) in a Draft polar array (edit `NumberPolar`); lofts and ducts are
   `Part::Loft`; cuts are `Part::Cut` in recipe order.
 - No colours yet (freecadcmd has no GUI to store them).
-- Verified: ramjet (9 parts, including the `pipe` fuel bars and angled `fins` gutters), f1 (12 parts, including
+- Verified before the fidelity upgrade (part counts of that time; the Raptors' FreeCAD check is in the
+  [verification notes](documentation/verification.md)): ramjet (9 parts, including the `pipe` fuel bars and angled `fins` gutters), f1 (12 parts, including
   the `pipe` ducts), tsirkon (17 parts), oreshnik (13 parts) match cadgen at 100.00 % for every part (the two
   missiles were last run before the torus fix below); the same two missiles also pass `solidworks_verify.py`.
   Turbojet (~80 min): every part matches in volume; `compressor_stators` passes by point sampling (99.62 %;
@@ -305,7 +306,7 @@ cropped to `--ref-box`, rotated/flipped to nose-left and fitted by length. Curre
 ## Verification done
 
 Current viewer/export-access checks and their scope are recorded separately in
-[verification notes](docs/verification.md). The checks below are historical
+[verification notes](documentation/verification.md). The checks below are historical
 geometry and native-platform checks; rerun them after changing the relevant model.
 
 Checks run with `read_step` on the saved STEP files (rerun with the snippet below after changing geometry):

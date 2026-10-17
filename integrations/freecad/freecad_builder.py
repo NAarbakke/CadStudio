@@ -58,8 +58,9 @@ def revolution(name, sk, axis_y=0.0):
     return rev
 
 
-def polar(obj, name, n, axis=V(1, 0, 0), center=V(0, 0, 0)):
+def polar(obj, name, n, axis=V(1, 0, 0), center=V(0, 0, 0), fuse=False):
     arr = Draft.make_polar_array(obj, number=n, angle=360, center=center, use_link=False)
+    arr.Fuse = fuse  # copies that cross each other must be fused: a compound of overlapping solids is no base for a boolean
     arr.Axis = axis
     arr.Label = name
     return arr
@@ -109,7 +110,7 @@ def op_ring(name, x, r0, r1, chord, thick, n, stagger, angle=0):
     box.Length, box.Width, box.Height = chord, r1 - r0, thick
     local = App.Placement(V(-chord / 2, 0, -thick / 2), App.Rotation())
     box.Placement = about_x(angle).multiply(App.Placement(V(x, r0, 0), App.Rotation(V(0, 1, 0), stagger)).multiply(local))
-    return polar(box, name, n)
+    return polar(box, name, n, fuse=thick / 2 > r0)  # plates reaching past the axis radius cross their neighbours (lattice ribs)
 
 
 def op_pins(name, x, r0, r1, dia, n, angle=0):

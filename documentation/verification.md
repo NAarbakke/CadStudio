@@ -1,5 +1,45 @@
 # Verification record
 
+## Tsirkon and Oreshnik fidelity upgrade, 2026-10-16
+
+Both models were rebuilt to the fidelity standard: a finish per part, rounded or chamfered turned parts,
+named sub-assemblies, bolted joint frames, closure rings and skin screw rows.
+
+| Export | Parts | `tools/model_check.py` |
+|---|---|---|
+| `tsirkon.step` | 32 in 5 sub-assemblies | OK, 75 pairs tested, envelope x -50...8570 mm |
+| `oreshnik.step` | 34 | OK, 93 pairs tested, envelope x 0...13000 mm |
+
+`model_check.py` first reported `post_boost_stage` of Oreshnik invalid although the part is valid as
+read from the STEP: the fuzzy booleans of the pair test raise shape tolerances in place and the validity
+test ran afterwards. Validity is now tested before the booleans.
+
+Tsirkon was built in FreeCAD (`integrations/freecad/freecad_build.py`): every part matches the cadgen
+part at 100.00 % overlap. Oreshnik stopped at `ic_shell` (a Draft polar array of crossing `LatticeRibs` plates is no
+valid base for a boolean); `integrations/freecad/freecad_builder.py` now fuses such arrays, and all 34 Oreshnik parts
+match at 100.00 %. Not rebuilt in SolidWorks. The two models were reviewed as Render-display GLB snapshots
+(`tmp/check/<model>_render.png`). The 13 project tests passed.
+
+## Engineering reports, 2026-10-17
+
+Every model has a manifest `models/<model>/reports/<model>.yaml` and a generated
+`<model>_engineering_report.pdf` and `.json` beside it (10 reports, 6-7 pages each: overview, exterior, plan and section
+views, specifications, sub-assembly and component tables, sources and assumptions, an A3 general arrangement).
+The generator now paginates tables, renders exteriors from the GLB, supports `scale: auto`, and when the kernel's
+hidden-line projection fails on a spline face (`hot_gas_manifold` of the Raptors) turns that revolved part about the
+axis, or leaves it out and says so on the sheet. The fidelity report (`models/model_fidelity.pdf`) was regenerated on 2026-10-17 with all seven upgraded models; its gallery now renders from the GLB files, because the 300 s STEP snapshot limit failed on the larger models.
+
+## Turbofan nacelle upgrade, 2026-10-10 (recorded 2026-10-16)
+
+The GE E3 nacelle was split into four sections (inlet with a separate lip skin, fan frame cowl,
+reverser, tailpipe) in a new `nacelle` sub-assembly: 22 parts in 5 sub-assemblies, up from 18 parts.
+The saved `ge_e3_turbofan.step` (built 2026-10-10 23:35) has 22 parts and passed `tools/model_check.py`:
+every part a valid solid, no two parts intersecting (64 pairs tested), envelope x −1590…4580 mm,
+Ø2489 mm (matches Table I). Not rebuilt in FreeCAD or SolidWorks, and the fidelity report was not
+regenerated.
+
+The 13 project tests passed on 2026-10-16.
+
 ## Engine update to cadgen 0.7.19, 2026-10-10
 
 cadgen and the text-to-cad plugin were updated from 0.7.10 to 0.7.19 (Windows 11).
@@ -47,8 +87,7 @@ code in `models/lib/`. All seven existing models were rebuilt from their new loc
 The Raptor models and the nuclear turbojet were reviewed as Render-display GLB snapshots
 (`tmp/check/<model>_render.png`). The Raptor layout was then reworked against the SpaceX photographs (`models/spacex_raptor_1/profile/README.md`) and rebuilt, then dressed with swept ducts (the new `sweep` op), small lines, controllers and wiring; the part counts above are the final models. The three Raptors were also built in FreeCAD
 (`integrations/freecad/freecad_build.py`): every part matches the cadgen part at 100.00 % overlap.
-The upgraded nuclear turbojet was not rebuilt in FreeCAD, and the fidelity report
-(`reports/model_fidelity.py`) was not regenerated.
+The upgraded nuclear turbojet was not rebuilt in FreeCAD.
 
 `tools/start_viewer.py --check-all` read all 30 exports of the ten built models on viewer 0.7.19 and
 skipped the text-to-cad example projects, which have never been built.

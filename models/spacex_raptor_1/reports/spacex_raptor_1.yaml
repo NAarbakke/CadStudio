@@ -1,0 +1,88 @@
+schema_version: 1
+title: SpaceX Raptor 1
+subtitle: Sea-level full-flow staged-combustion methane/oxygen engine, 2019-21
+document_id: CS-SPX-R1
+revision: A
+status: Photograph-based reconstruction. Overall size is published; proportions are read at about +/-5 %.
+summary: >-
+  A 36-part display model in 5 sub-assemblies: mount plate and gimbal block on a thrust frame, oxygen pump and
+  preburner on the chamber axis, diameter 870 hot-gas manifold disc on the main injector, methane turbopump under
+  the disc, jacketed chamber with a coolant collector, heat-tinted throat and manifold, short wide bell, a pump
+  discharge duct wrapped around the chamber, seven small lines, two engine controllers with wiring, valves with
+  actuators, a torch igniter, sensor ports and bolted flanges throughout.
+model:
+  source: models/spacex_raptor_1/src/spacex_raptor_1.py
+  step: models/spacex_raptor_1/STEP/spacex_raptor_1.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The engine axis is +X from the top of the engine to the nozzle exit; the methane turbopump is at +Y.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: "Section through the engine axis: chamber, throat, coolant manifold and the short wide bell."
+specifications:
+  - label: Length
+    value: 3100 mm
+    basis: Reported
+    source: WIKI
+  - label: Exit diameter
+    value: 1300 mm
+    basis: Reported
+    source: WIKI
+  - label: Sea-level expansion ratio
+    value: 34.34:1
+    basis: Reported
+    source: WIKI
+  - label: Throat diameter
+    value: 214 mm
+    basis: Derived from the expansion ratio and exit diameter
+    source: WIKI
+  - label: Thrust / mass / chamber pressure
+    value: 185 tf / 2080 kg / 250 bar
+    basis: Reported (engine, not this model)
+    source: WIKI
+  - label: Hot-gas manifold disc diameter
+    value: 870 mm
+    basis: Read from photographs, about +/-5 %
+    source: PHOTOS
+  - label: Dry mass of this model / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: WIKI
+    title: Wikipedia, "SpaceX Raptor" (length, diameter, expansion ratio, thrust, mass, chamber pressure).
+    locator: "Public figures. See models/spacex_raptor_1/profile/README.md."
+  - id: PHOTOS
+    title: SpaceX photographs of Raptor 1, 2 and 3 and of a sea-level Raptor at Hawthorne.
+    locator: "Local files: models/spacex_raptor_1/profile/. Stations and diameters of the main masses read at about +/-5 %. Everyday Astronaut, Raptor 1 vs Raptor 2, for the flanged, instrumented layout."
+assumptions:
+  - "Taken from sources: overall length, exit diameter, expansion ratio and, from photographs, the layout and the main masses."
+  - "Assumed for appearance (models/lib/raptor.py): housing shapes, chamber and bell contour, duct routing and diameters, flange and bolt sizes and counts, corner radii."
+  - "The small lines, controllers, wiring and actuators are indicative; their number, size and routing are not from the sources, and the real powerhead is far denser. Gimbal actuators are not modelled."
+  - "Fasteners are a nut and stud end standing on a flange face; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: SPACEX RAPTOR 1 / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. PHOTOGRAPH-BASED RECONSTRUCTION."
+      - "AXIS +X FROM THE TOP OF THE ENGINE TO THE NOZZLE EXIT."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

@@ -1,0 +1,106 @@
+schema_version: 1
+title: GE/NASA Energy Efficient Engine (E3)
+subtitle: Two-spool long-duct mixed-flow turbofan / NASA CR-165398 programme
+document_id: CS-GE-E3-TF
+revision: A
+status: Sourced study reconstruction. Drawing dimensions describe the CAD model.
+summary: >-
+  A 22-part display model of the E3 flight propulsion system in 5 sub-assemblies: 32-blade fan with part-span
+  shrouds and quarter-stage booster, 64 swept bypass outlet guide vanes, 10-stage 23:1 compressor, double-annular
+  combustor, 2-stage high-pressure and 5-stage low-pressure turbine at their design airfoil counts, 18-lobe mixer,
+  centre plug, and a nacelle in four sections (inlet with a polished lip skin, composite fan frame cowl, reverser,
+  tailpipe). Dimensions and flow path follow the E3 NASA report; airfoils and internals are simplified.
+model:
+  source: models/ge_e3_turbofan/src/ge_e3_turbofan.py
+  step: models/ge_e3_turbofan/STEP/ge_e3_turbofan.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: Flow follows +X from the fan face at x = 0 to the exhaust nozzle.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the engine axis: fan and booster, bypass duct with outlet guide vanes, ten-stage compressor,
+      double-annular combustor, turbines, mixer and plug.
+specifications:
+  - label: Fan diameter
+    value: 2108 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Maximum nacelle diameter
+    value: 2489 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Inlet length from fan face
+    value: 1590 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Nacelle length
+    value: 6033 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Exhaust nozzle diameter
+    value: 1590 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Turbomachinery length
+    value: 3180 mm
+    basis: Reported; Table I
+    source: E3
+  - label: Fan blades / bypass OGVs
+    value: 32 / 64
+    basis: Reported; Figure 2 and fan design report
+    source: CR165148
+  - label: Mixer lobes
+    value: "18"
+    basis: Reported; FPS design report
+    source: CR168219
+  - label: Takeoff thrust
+    value: 162.4 kN
+    basis: Reported; Table I
+    source: E3
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: E3
+    title: Energy Efficient Engine, flight propulsion system final design and analysis (GE/NASA, 1981).
+    locator: "Table I, Figure 2 cross-section, Figure 20 nacelle arrangement. Local file: models/ge_e3_turbofan/profile/E3_energy_efficient_engine_1981.pdf."
+  - id: CR165148
+    title: E3 fan component design report (NASA CR-165148).
+    locator: Part-span shrouds at 50 % span, 64 swept and leaned OGVs, 56-blade quarter-stage rotor. See models/ge_e3_turbofan/profile/.
+  - id: CR168219
+    title: E3 flight propulsion system design report (NASA CR-168219).
+    locator: Mixer, 18 scalloped lobes with radial sidewalls. Compressor, HPT and LPT airfoil counts come from CR-165558, CR-167955 and CR-167956 in the same folder.
+assumptions:
+  - "Stations and radii are digitised from Figure 2 with the scale taken from the fan diameter, about +/-15 mm."
+  - "Airfoils are flat plates, the mixer lobes have radial sidewalls only, and internal structure is simplified."
+  - "HPC stators 2 and 5 were read from a poor scan."
+  - "The nacelle contour between the Table I dimensions, the stations where its four sections meet, the separate lip skin and the bevelled joint lines are assumed for appearance."
+  - "Plug mounting bolts, HPT disk tie bolts, the shaft/rotor split of each spool and all corner rounding are assumed; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: GE E3 TURBOFAN / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. STUDY RECONSTRUCTION."
+      - "ENGINE AXIS +X. X = 0 AT THE FAN FACE."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

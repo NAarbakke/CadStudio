@@ -1,0 +1,77 @@
+schema_version: 1
+title: SpaceX Raptor 2
+subtitle: Simplified second-generation sea-level methane/oxygen engine, 2022-25
+document_id: CS-SPX-R2
+revision: A
+status: Photograph-based reconstruction. Overall size is published; the throat is estimated.
+summary: >-
+  A 30-part display model in 5 sub-assemblies on the Raptor 1 layout, simplified: oxygen inlet bellows on the axis,
+  a wider throat, welded preburners, three small lines, one engine controller with wiring, the green-grey oxidised
+  bell of the photographs, and bolt circles only at the inlets, the manifold disc and the main injector.
+model:
+  source: models/spacex_raptor_2/src/spacex_raptor_2.py
+  step: models/spacex_raptor_2/STEP/spacex_raptor_2.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The engine axis is +X from the top of the engine to the nozzle exit; the methane turbopump is at +Y.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: "Section through the engine axis: chamber, opened-up throat, coolant manifold and bell."
+specifications:
+  - label: Length
+    value: 3100 mm
+    basis: Reported
+    source: WIKI
+  - label: Exit diameter
+    value: 1300 mm
+    basis: Reported (same as Raptor 1)
+    source: WIKI
+  - label: Throat diameter
+    value: 218 mm
+    basis: Estimated; Raptor 1 throat area scaled by thrust over chamber pressure
+    source: WIKI
+  - label: Thrust / mass / chamber pressure
+    value: 230 tf / 1630 kg / 300 bar
+    basis: Reported (engine, not this model)
+    source: WIKI
+  - label: Dry mass of this model / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: WIKI
+    title: Wikipedia, "SpaceX Raptor" (length, diameter, thrust, mass, chamber pressure).
+    locator: "Public figures. Shared material in models/spacex_raptor_1/profile/."
+  - id: PHOTOS
+    title: SpaceX photographs of Raptor 1, 2 and 3 and Everyday Astronaut, Raptor 1 vs Raptor 2.
+    locator: "Same exit diameter as Raptor 1, throat opened up, flanges turned into welds, parts and sensors deleted."
+assumptions:
+  - "The throat diameter is a constant-thrust-coefficient estimate (thrust 230/185 over chamber pressure 300/250)."
+  - "Layout and main masses are read from photographs at about +/-5 %; everything else (housing shapes, contours, duct routing, flange and bolt sizes, corner radii) is assumed for appearance (models/lib/raptor.py)."
+  - "The small lines, controller, wiring and actuators are indicative. Fasteners are a nut and stud end on a flange face; no holes are cut."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: SPACEX RAPTOR 2 / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. PHOTOGRAPH-BASED RECONSTRUCTION."
+      - "AXIS +X FROM THE TOP OF THE ENGINE TO THE NOZZLE EXIT."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall

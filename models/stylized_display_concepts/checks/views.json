@@ -1,0 +1,32 @@
+{
+  "jobs": [
+    {
+      "input": "models/stylized_display_concepts/STEP/delta_display.step",
+      "mode": "view",
+      "outputs": [
+        {"path": "models/stylized_display_concepts/profile/delta_iso.png", "camera": {"direction": [-1, -1, 1], "up": [0, 0, 1]}, "viewLabel": "Delta display - perspective"},
+        {"path": "models/stylized_display_concepts/profile/delta_top.png", "camera": {"direction": [0, 0, 1], "up": [0, 1, 0]}, "viewLabel": "Delta display - top"},
+        {"path": "models/stylized_display_concepts/profile/delta_side.png", "camera": {"direction": [0, -1, 0], "up": [0, 0, 1]}, "viewLabel": "Delta display - side"}
+      ],
+      "output": {"viewLabels": true, "padding": 0.12, "sizeProfile": "simple"}
+    },
+    {
+      "input": "models/stylized_display_concepts/STEP/dart_display.step",
+      "mode": "view",
+      "outputs": [
+        {"path": "models/stylized_display_concepts/profile/dart_iso.png", "camera": {"direction": [-1, -1, 1], "up": [0, 0, 1]}, "viewLabel": "Dart display - perspective"},
+        {"path": "models/stylized_display_concepts/profile/dart_top.png", "camera": {"direction": [0, 0, 1], "up": [0, 1, 0]}, "viewLabel": "Dart display - top"},
+        {"path": "models/stylized_display_concepts/profile/dart_side.png", "camera": {"direction": [0, -1, 0], "up": [0, 0, 1]}, "viewLabel": "Dart display - side"}
+      ],
+      "output": {"viewLabels": true, "padding": 0.12, "sizeProfile": "simple"}
+    },
+    {
+      "input": "models/stylized_display_concepts/STEP/display_pair.step",
+      "mode": "view",
+      "outputs": [
+        {"path": "models/stylized_display_concepts/profile/display_pair_iso.png", "camera": {"direction": [-1, -1, 1], "up": [0, 0, 1]}, "viewLabel": "Invented decorative display concepts"}
+      ],
+      "output": {"viewLabels": true, "padding": 0.12, "sizeProfile": "diagnostic"}
+    }
+  ]
+}

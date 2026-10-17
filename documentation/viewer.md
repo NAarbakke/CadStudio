@@ -40,6 +40,9 @@ of airfoil faces and can take longer on a cold browser/cache.
 | `tsirkon` | `tsirkon/STEP/tsirkon.step` |
 | `ge_e3_turbofan` | `ge_e3_turbofan/STEP/ge_e3_turbofan.step` |
 | `nasa_lewis_small_turbojet` | `nasa_lewis_small_turbojet/STEP/nasa_lewis_small_turbojet.step` |
+| `spacex_raptor_1` | `spacex_raptor_1/STEP/spacex_raptor_1.step` |
+| `spacex_raptor_2` | `spacex_raptor_2/STEP/spacex_raptor_2.step` |
+| `spacex_raptor_3` | `spacex_raptor_3/STEP/spacex_raptor_3.step` |
 
 For a visual-only mesh export, use the model's GLB folder or:
 
@@ -127,4 +130,4 @@ fails. Browser appearance still needs a visual check.
 The restart investigation on 2026-10-03 found the advertised port had no live
 listener. No crash traceback was present in its saved launch log, so the cause
 of termination was not established. The model files were preserved; access
-and visual checks are documented in `docs/verification.md`.
+and visual checks are documented in `documentation/verification.md`.

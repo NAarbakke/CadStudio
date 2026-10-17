@@ -52,6 +52,8 @@ def check(step, tolerance=1.0):
     from compare import common_volume, volume
     leaves = list(read_step(str(step)).leaves)
     volumes = {c.label: volume(c) for c in leaves}
+    # before the booleans below: a fuzzy boolean can raise a shape's tolerance in place and fail it afterwards
+    invalid = [c.label for c in leaves if not c.is_valid or volumes[c.label] <= 0]
     boxes = {c.label: c.bounding_box() for c in leaves}
     close = [(a, b) for a, b in itertools.combinations(leaves, 2) if boxes_overlap(boxes[a.label], boxes[b.label])]
     found = [(a, b, round(v, 1)) for a, b in close if (v := common_volume(a, b, fuzz=1e-4)) > tolerance]
@@ -62,7 +64,7 @@ def check(step, tolerance=1.0):
         "faces": sum(len(c.faces()) for c in leaves), "volume_l": sum(volumes.values()) / 1e6,
         "envelope_mm": [[round(min(getattr(b.min, k) for b in boxes.values()), 2) for k in "XYZ"],
                         [round(max(getattr(b.max, k) for b in boxes.values()), 2) for k in "XYZ"]],
-        "invalid": [c.label for c in leaves if not c.is_valid or volumes[c.label] <= 0],
+        "invalid": invalid,
         "pairs_tested": len(close), "intersecting": hits, "cleared": cleared, "tolerance_mm3": tolerance,
     }
 

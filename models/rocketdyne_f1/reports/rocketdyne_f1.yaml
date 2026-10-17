@@ -1,0 +1,92 @@
+schema_version: 1
+title: Rocketdyne F-1
+subtitle: Saturn V S-IC first-stage rocket engine / R-3896-1
+document_id: CS-RD-F1
+revision: A
+status: Sourced study reconstruction. Drawing dimensions describe the CAD model.
+summary: >-
+  A 42-part display model in 8 sub-assemblies: gimbal, hollow LOX dome with a flat-topped ring manifold and elbow
+  inlets, baffled injector, regeneratively cooled tube-bundle chamber with hatbands and fuel manifold, Rao bell to
+  10:1, double-walled nozzle extension to 16:1, turbine exhaust manifold, turbopump, heat exchanger, gas generator,
+  valves, four high-pressure ducts and bolted flanges. Envelope dimensions follow the technical manual.
+model:
+  source: models/rocketdyne_f1/src/rocketdyne_f1.py
+  step: models/rocketdyne_f1/STEP/rocketdyne_f1.step
+materials: {}
+part_materials: {}
+renders:
+  - id: exterior
+    title: Exterior assembly
+    source: glb
+    camera: "210:20"
+    display: render
+  - id: plan
+    title: Plan view
+    source: glb
+    camera: "0:90"
+    display: render
+    caption: The gimbal centre is the datum at x = 0; flow is +X toward the nozzle exit; the turbopump is at +Y.
+  - id: longitudinal_section
+    title: Longitudinal section / XY plane
+    mode: section
+    section: XY
+    camera: "0:90"
+    display: solid
+    caption: >-
+      Section through the engine axis: LOX dome and injector, tube-bundle chamber, throat, Rao bell and the
+      double-walled nozzle extension.
+specifications:
+  - label: Gimbal block above datum
+    value: 14.50 in
+    basis: Reported; Figure 2-22
+    source: R3896
+  - label: Thrust chamber exit flange
+    value: 150.00 in below datum, diameter 125 in
+    basis: Reported; Figure 2-22
+    source: R3896
+  - label: Nozzle extension exit
+    value: 215.50 in below datum, diameter 147 in
+    basis: Reported; Figure 2-22
+    source: R3896
+  - label: Throat area / diameter
+    value: 961.4 sq in / 35.0 in
+    basis: Reported
+    source: R3896
+  - label: Expansion ratio
+    value: 10:1 at the chamber exit, 16:1 at the extension exit
+    basis: Reported
+    source: R3896
+  - label: Tubes
+    value: 178 primary / 356 secondary
+    basis: Reported
+    source: R3896
+  - label: Injector diameter
+    value: 44 in (39 in exposed to the chamber)
+    basis: Reported
+    source: HEROIC
+  - label: Dry mass / physical materials
+    value: Unknown
+    basis: Not assigned in this model
+sources:
+  - id: R3896
+    title: R-3896-1 F-1 Technical Manual, Engine Data (Rocketdyne, 1967-72).
+    locator: "Figure 2-22 engine envelope dimensions, Figures 1-7, 1-13 and 1-16 and text. Local files: models/rocketdyne_f1/profile/resources/. Dimensions are in inches as published and converted once."
+  - id: HEROIC
+    title: heroicrelics.org F-1 thrust chamber, injector and high-pressure duct pages.
+    locator: "Injector with LOX dome cross-section; propellant high-pressure ducts drawing. Local copies in models/rocketdyne_f1/profile/resources/."
+assumptions:
+  - "Not modelled: fuel inlet elbows, lines, wiring and insulation; the duct routing is simplified."
+  - "Flange widths and thicknesses, bolt counts and sizes, corner radii, the housing/flange split of the turbopump, valves and gas generator, the fuel inlet stubs, the gas generator duct and the outrigger struts are assumed for appearance."
+  - "The heat-tint bands below the jacket are an appearance choice; no holes are cut in any flange."
+  - "Display finishes are not material assignments; no physical material or density has been inferred from them."
+drawings:
+  - title: ROCKETDYNE F-1 / GENERAL ARRANGEMENT
+    size: A3
+    scale: auto
+    notes:
+      - "DIMENSIONS IN mm. STUDY RECONSTRUCTION."
+      - "AXIS +X FROM THE GIMBAL CENTRE TO THE NOZZLE EXIT."
+      - "OVERALL DIMENSIONS ARE MEASURED FROM SAVED CAD."
+    dimensions:
+      front:
+        - type: overall
